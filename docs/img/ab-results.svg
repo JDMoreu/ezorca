@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="680" viewBox="0 0 1120 680" role="img" aria-labelledby="ab-title ab-desc">
+  <title id="ab-title">A/B real: calidad y tokens sin EzOrca y con EzOrca</title>
+  <desc id="ab-desc">Calidad del juez ciego: 9 de 15 sin EzOrca con un bloqueante, y 14 de 15 con EzOrca sin bloqueantes. Tokens nuevos, suma de entrada y salida: sin EzOrca, Codex medio 14 697; con EzOrca, OpenCode económico 137 305, Codex medio 21 327 y Claude frontera 12 383. Caché leída: sin EzOrca, Codex medio 324 352; con EzOrca, OpenCode económico 3 590 016, Codex medio 239 616 y Claude frontera 10 600 989. Los dos subgráficos de tokens tienen escalas lineales independientes.</desc>
+  <style>
+    :root {
+      --bg: #F4F6F8; --surface: #FFFFFF; --ink: #14213A; --muted: #5B6B82;
+      --line: #D5DCE5; --accent: #1F6F8B; --accent-2: #C7861A;
+      --good: #2E7D4F; --bad: #B23A3A; color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0E1420; --surface: #151E2D; --ink: #E6ECF2; --muted: #9AA8BB;
+        --line: #2A3547; --accent: #5DB3CF; --accent-2: #E0A445;
+        --good: #5FBF86; --bad: #E07A7A; color-scheme: dark;
+      }
+    }
+    text { font-family: Inter, Segoe UI, Arial, sans-serif; font-variant-numeric: tabular-nums; }
+    .title { font-size: 23px; font-weight: 600; }
+    .panel-title { font-size: 17px; font-weight: 600; }
+    .label { font-size: 13px; }
+    .small { font-size: 12px; }
+    .num { font-variant-numeric: tabular-nums; }
+  </style>
+  <rect x="0" y="0" width="1120" height="680" fill="var(--bg)"/>
+  <text class="title" x="32" y="42" fill="var(--ink)">A/B real: calidad y tokens</text>
+  <text class="label" x="32" y="68" fill="var(--muted)">Misma tarea y contrato · 24-nov-2026</text>
+  <rect x="32" y="96" width="310" height="540" fill="var(--surface)" stroke="var(--line)"/>
+  <rect x="366" y="96" width="722" height="540" fill="var(--surface)" stroke="var(--line)"/>
+  <text class="panel-title" x="56" y="132" fill="var(--ink)">Calidad del juez ciego</text>
+  <text class="small" x="56" y="155" fill="var(--muted)">15 casos límite · escala 0–15</text>
+  <text class="label" x="56" y="194" fill="var(--ink)">Sin EzOrca</text>
+  <rect x="56" y="204" width="153.6" height="30" fill="var(--muted)"/>
+  <text class="label num" x="220" y="225" fill="var(--ink)">9/15</text>
+  <rect x="56" y="246" width="116" height="28" fill="var(--surface)" stroke="var(--bad)"/>
+  <text class="small" x="114" y="265" text-anchor="middle" fill="var(--bad)">1 bloqueante</text>
+  <text class="label" x="56" y="315" fill="var(--ink)">Con EzOrca</text>
+  <rect x="56" y="325" width="238.93" height="30" fill="var(--good)"/>
+  <text class="label num" x="285" y="346" text-anchor="end" fill="var(--surface)">14/15</text>
+  <text class="small" x="56" y="373" fill="var(--good)">0 bloqueantes</text>
+  <line x1="56" y1="402" x2="312" y2="402" stroke="var(--line)" fill="none"/>
+  <text class="small num" x="56" y="424" fill="var(--muted)">0</text>
+  <text class="small num" x="312" y="424" text-anchor="end" fill="var(--muted)">15</text>
+  <line x1="56" y1="452" x2="318" y2="452" stroke="var(--line)" fill="none"/>
+  <text class="label num" x="56" y="481" fill="var(--ink)">10/10 pruebas ocultas</text>
+  <text class="small" x="56" y="503" fill="var(--muted)">en ambos brazos</text>
+  <text class="small" x="56" y="551" fill="var(--muted)">El juez evaluó carpetas X/Y</text>
+  <text class="small" x="56" y="572" fill="var(--muted)">aleatorias con batería propia.</text>
+  <text class="panel-title" x="390" y="132" fill="var(--ink)">Tokens por escalón y brazo</text>
+  <text class="small" x="390" y="155" fill="var(--muted)">Barras apiladas · una escala lineal por sub-gráfico</text>
+  <rect x="390" y="174" width="12" height="12" fill="var(--accent)"/>
+  <text class="small" x="410" y="185" fill="var(--ink)">económico</text>
+  <rect x="510" y="174" width="12" height="12" fill="var(--muted)"/>
+  <text class="small" x="530" y="185" fill="var(--ink)">medio</text>
+  <rect x="600" y="174" width="12" height="12" fill="var(--accent-2)"/>
+  <text class="small" x="620" y="185" fill="var(--ink)">frontera</text>
+  <text class="panel-title" x="390" y="230" fill="var(--ink)">Tokens nuevos (entrada + salida)</text>
+  <text class="label" x="390" y="267" fill="var(--muted)">Sin EzOrca</text>
+  <rect x="490" y="250" width="47.95" height="24" fill="var(--muted)"/>
+  <text class="small num" x="490" y="291" fill="var(--muted)">medio 14 697</text>
+  <text class="label" x="390" y="320" fill="var(--ink)">Con EzOrca</text>
+  <rect x="490" y="303" width="448.01" height="24" fill="var(--accent)"/>
+  <rect x="938.01" y="303" width="69.59" height="24" fill="var(--muted)"/>
+  <rect x="1007.60" y="303" width="40.40" height="24" fill="var(--accent-2)"/>
+  <text class="small num" x="490" y="345" fill="var(--ink)">económico 137 305 · medio 21 327 · frontera 12 383</text>
+  <line x1="390" y1="367" x2="1064" y2="367" stroke="var(--line)" fill="none"/>
+  <text class="panel-title" x="390" y="397" fill="var(--ink)">Caché leída</text>
+  <text class="label" x="390" y="434" fill="var(--muted)">Sin EzOrca</text>
+  <rect x="490" y="417" width="12.54" height="24" fill="var(--muted)"/>
+  <text class="small num" x="490" y="458" fill="var(--muted)">medio 324 352</text>
+  <text class="label" x="390" y="487" fill="var(--ink)">Con EzOrca</text>
+  <rect x="490" y="470" width="138.82" height="24" fill="var(--accent)"/>
+  <rect x="628.82" y="470" width="9.27" height="24" fill="var(--muted)"/>
+  <rect x="638.09" y="470" width="409.91" height="24" fill="var(--accent-2)"/>
+  <text class="small num" x="490" y="512" fill="var(--ink)">económico 3 590 016 · medio 239 616 · frontera 10 600 989</text>
+  <text class="small num" x="390" y="553" fill="var(--muted)">Caché escrita no apilada: 17 367 (frontera, con EzOrca).</text>
+  <text class="small" x="390" y="581" fill="var(--muted)">No compares longitudes entre los dos sub-gráficos.</text>
+  <text class="small" x="390" y="608" fill="var(--muted)">Las lecturas de caché no equivalen a tokens nuevos ni a dólares.</text>
+</svg>

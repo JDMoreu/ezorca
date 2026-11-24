@@ -8,7 +8,7 @@ La rúbrica y las plantillas quedan en [`eval/`](../eval/cases.json) para repeti
 ## Por qué se evaluó
 
 La meta era calidad de frontera con la mitad o menos del costo (meta de diseño;
-no hubo medición comparativa de costo): modelos caros
+aquí no se midió en dólares): modelos caros
 solo para razonar y trabajo bien definido en modelos económicos. Agregar prosa a
 una skill de coordinación puede mejorar un caso y empeorar otro sin que se note.
 La evaluación existía para decidir entre textos con evidencia, detectar
@@ -116,7 +116,7 @@ reglas que el texto sí dice. Con un juez y un ejecutor ruidoso, el comparador
 estricto no puede aceptar ninguna versión: más repeticiones también agregan más
 oportunidades de fallar.
 
-## A/B real
+## A/B real: dos tareas de un proyecto Rust privado
 
 Además del simulacro, dos tareas reales de un **proyecto Rust privado**, una
 pequeña y una mediana, cada una resuelta por una sesión de modelo económico y una
@@ -128,6 +128,65 @@ sesión de QA medio:
 | Mediana | Mejor según QA ciego: la referencia tenía un defecto de manejo de errores que la candidata no tenía | 1 sesión económica + 1 de QA |
 
 Ninguna sesión de frontera escribió código.
+
+## A/B real con y sin EzOrca: cost_report.py
+
+La misma tarea, `scripts/cost_report.py` (resumir tokens por sesión de Claude
+Code, Codex y OpenCode leyendo sus registros locales), con un contrato idéntico
+para los dos lados y el mismo commit de partida:
+
+- **Equipos:** sin EzOrca, una sesión de Codex en esfuerzo medio que resolvió
+  sola; con EzOrca, el Elefante escribió el encargo, un junior OpenCode económico
+  implementó, un QA Codex medio revisó en sesión nueva y el mismo junior corrigió.
+- **Árbitros:** 10 pruebas ocultas escritas por un tercero a partir del contrato,
+  y un juez ciego en sesión nueva con su propia batería de 15 casos límite y las
+  implementaciones en carpetas X/Y aleatorias.
+
+| métrica | sin EzOrca | con EzOrca |
+|---|---|---|
+| Pruebas ocultas (10) | 10/10 | 10/10 |
+| Batería del juez ciego (15 casos límite) | 9/15 | 14/15 |
+| Bloqueantes según el juez | 1 (traceback con rutas locales ante registros malformados; pérdida silenciosa de sesiones) | 0 |
+| Pruebas propias | 1 prueba | 10 pruebas (antes del código) |
+| Veredicto del juez | peor; no apta | mejor; apta tras un arreglo localizado |
+| Tiempo de pared | ~2 min | ~10 min (incluye QA y correcciones) |
+| Sesiones | 1 medio | 1 económico + 1 medio + Elefante (frontera) |
+| Tokens Codex medio (in / out / caché leída) | 10 453 / 4 244 / 324 352 (total 339 049) | QA: 18 335 / 2 992 / 239 616 (total 260 943) |
+| Tokens OpenCode económico (in / out / caché leída) | — | 111 339 / 25 966 / 3 590 016 (total 3 727 321) |
+| Tokens frontera Claude (in / out / caché leída / caché escrita) | 0 | 48 / 12 335 / 10 600 989 / 17 367 en 18 llamadas |
+
+![A/B real: calidad y tokens](img/ab-results.svg)
+
+### Lectura
+
+- **Las pruebas ocultas empataron; el juez ciego no.** Las dos implementaciones
+  pasaron 10/10, pero en los 15 casos límite del juez EzOrca obtuvo 14/15 sin
+  bloqueantes y sin EzOrca 9/15 con uno: un traceback con rutas locales ante
+  registros malformados y pérdida silenciosa de sesiones. La diferencia vino del
+  ciclo QA → correcciones, no de escribir más código.
+- **Más tokens, más calidad.** EzOrca gastó varias veces más tokens, sobre todo
+  en el junior económico, y a cambio entregó robustez y privacidad.
+- **Un solo modelo medio basta en tareas chicas y muy especificadas.** Sin
+  EzOrca, Codex medio resolvió la tarea en ~2 min y con menos tokens: para ese
+  tipo de tarea, coordinar no se paga.
+- **El costo del coordinador lo domina el tamaño de su contexto.** El Elefante
+  releyó unos 590 000 tokens de contexto por llamada porque el chat ya era muy
+  largo; en un chat nuevo habría sido una fracción. El ahorro de EzOrca aparece
+  cuando la frontera no escribe código y su contexto se mantiene corto.
+
+### Hallazgo: los registros de OpenCode cambiaron
+
+Los dos lados siguieron el mismo error del contrato: OpenCode ya no guarda sus
+sesiones en `session` sino en `session_v2`, y solo medir contra registros reales lo reveló.
+
+### Límites de este A/B
+
+- **Una repetición por lado.** Es una señal, no una diferencia demostrada.
+- **Jueces LLM.** La batería de 15 casos y el veredicto los produjo un modelo, no
+  una persona.
+- **Dólares no calculados.** Los precios no se verificaron en esa sesión; el
+  costo se mide en tokens, y las lecturas de caché suelen cobrarse a una fracción
+  del precio de entrada según cada proveedor.
 
 ## Límites honestos
 

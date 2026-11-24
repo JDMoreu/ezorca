@@ -70,12 +70,7 @@ escribir código: va a un junior con su propio encargo.
 Los escalones se eligen de lo que esté instalado en el entorno; los que no
 existan se saltan.
 
-```mermaid
-flowchart BT
-    E1["1. Económico o gratis (incluye locales)"] --> E2["2. Económico capaz (por ejemplo, un «pro»)"]
-    E2 --> E3["3. Medio (Codex en esfuerzo medio u otro)"]
-    E3 --> E4["4. Último recurso: la frontera describe y un modelo de 2 o 3 escribe"]
-```
+![Escalera de modelos](img/ladder.svg)
 
 - **Cuándo subir.** Ante el primer fallo, corrige el encargo con el fallo
   concreto, más detalle y un ejemplo, y reenvíalo al mismo worker. Dos fallos en
@@ -114,20 +109,7 @@ flowchart BT
 7. **Cierre con costo.** Resumen por criterio con evidencia, pendientes y costo
    real (sesiones por nivel, reintentos, escalados, aceptadas y rechazadas).
 
-```mermaid
-flowchart TD
-    A["Descubrir agentes y modelos"] --> B["Plan por papel"]
-    B --> C["Escribir y validar encargos"]
-    C --> D["Lanzar la tanda de Goldfish"]
-    D --> E["Terminar turno: Orca despierta"]
-    E --> F{"¿Reportes completos y criterios cumplidos?"}
-    F -- "No" --> G["Corregir encargo o subir de escalón"]
-    G --> D
-    F -- "Sí" --> H["Integrar uno a uno con puerta"]
-    H --> I{"¿Algo fuera de alcance o en rojo?"}
-    I -- "Sí" --> G
-    I -- "No" --> J["Cierre: criterios, pendientes y costo"]
-```
+![Flujo de EzOrca](img/flow.svg)
 
 ## Entrega normal y entrega verificada
 

@@ -3,6 +3,18 @@
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y la
 versión, [SemVer](https://semver.org/lang/es/).
 
+## [1.1.0] – 2026-11-24
+
+### Agregado
+
+- `scripts/cost_report.py`: tokens por sesión de Claude Code, Codex y OpenCode; en OpenCode se leen los registros `session_v2`.
+- Diagramas SVG del flujo, la escalera de modelos y los resultados del A/B en `docs/img/`.
+- Resultados del A/B real con y sin EzOrca en el README y en `docs/evaluation.md`.
+
+### Corregido
+
+- Compatibilidad con Python 3.11 en `fingerprint.py`.
+
 ## [1.0.0] – 2026-11-24
 
 ### Agregado

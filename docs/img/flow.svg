@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="380" viewBox="0 0 1280 380" role="img" aria-labelledby="flow-title flow-desc">
+  <title id="flow-title">Flujo de coordinación de EzOrca</title>
+  <desc id="flow-desc">De izquierda a derecha: pedido del usuario, contexto propio y preguntas; discover.py, plan por papel, encargos y check_spec.py; launch_wave.py con tope por modelo, Orca despierta al Elefante y stalled.py de respaldo; QA en otra sesión o familia y correcciones; check_scope.py y pruebas como puerta, integración e informe con costo mediante cost_report.py.</desc>
+  <style>
+    :root {
+      --bg: #F4F6F8; --surface: #FFFFFF; --ink: #14213A; --muted: #5B6B82;
+      --line: #D5DCE5; --accent: #1F6F8B; --accent-2: #C7861A;
+      --good: #2E7D4F; --bad: #B23A3A; color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0E1420; --surface: #151E2D; --ink: #E6ECF2; --muted: #9AA8BB;
+        --line: #2A3547; --accent: #5DB3CF; --accent-2: #E0A445;
+        --good: #5FBF86; --bad: #E07A7A; color-scheme: dark;
+      }
+    }
+    text { font-family: Inter, Segoe UI, Arial, sans-serif; font-variant-numeric: tabular-nums; }
+    .title { font-size: 23px; font-weight: 600; }
+    .box-title { font-size: 16px; font-weight: 600; }
+    .label { font-size: 13px; }
+    .small { font-size: 12px; }
+  </style>
+  <rect x="0" y="0" width="1280" height="380" fill="var(--bg)"/>
+  <text class="title" x="32" y="42" fill="var(--ink)">Cómo trabaja EzOrca</text>
+  <text class="label" x="32" y="68" fill="var(--muted)">Del pedido a una entrega verificada, con costo visible</text>
+  <rect x="32" y="112" width="216" height="184" fill="var(--surface)" stroke="var(--line)"/>
+  <rect x="32" y="112" width="216" height="6" fill="var(--accent)"/>
+  <text class="box-title" x="50" y="148" fill="var(--ink)">Pedido + contexto</text>
+  <text class="label" x="50" y="181" fill="var(--ink)">Pedido del usuario</text>
+  <text class="label" x="50" y="207" fill="var(--ink)">Contexto propio</text>
+  <text class="label" x="50" y="233" fill="var(--ink)">Una tanda de preguntas</text>
+  <line x1="250" y1="204" x2="274" y2="204" stroke="var(--muted)" stroke-width="2" fill="none"/>
+  <path d="M274 198 L284 204 L274 210 Z" fill="var(--muted)"/>
+  <rect x="286" y="112" width="216" height="184" fill="var(--surface)" stroke="var(--line)"/>
+  <rect x="286" y="112" width="216" height="6" fill="var(--accent)"/>
+  <text class="box-title" x="304" y="148" fill="var(--ink)">Descubrir y preparar</text>
+  <text class="label" x="304" y="181" fill="var(--ink)">discover.py: agentes y</text>
+  <text class="label" x="304" y="202" fill="var(--ink)">modelos por escalón</text>
+  <text class="label" x="304" y="228" fill="var(--ink)">Plan por papel → encargos</text>
+  <text class="label" x="304" y="254" fill="var(--ink)">check_spec.py</text>
+  <line x1="504" y1="204" x2="528" y2="204" stroke="var(--muted)" stroke-width="2" fill="none"/>
+  <path d="M528 198 L538 204 L528 210 Z" fill="var(--muted)"/>
+  <rect x="540" y="112" width="216" height="184" fill="var(--surface)" stroke="var(--line)"/>
+  <rect x="540" y="112" width="216" height="6" fill="var(--accent)"/>
+  <text class="box-title" x="558" y="148" fill="var(--ink)">Lanzar y despertar</text>
+  <text class="label" x="558" y="181" fill="var(--ink)">launch_wave.py</text>
+  <text class="label" x="558" y="207" fill="var(--ink)">Tope por modelo</text>
+  <text class="label" x="558" y="233" fill="var(--ink)">Orca despierta al Elefante</text>
+  <text class="label" x="558" y="259" fill="var(--muted)">stalled.py de respaldo</text>
+  <line x1="758" y1="204" x2="782" y2="204" stroke="var(--muted)" stroke-width="2" fill="none"/>
+  <path d="M782 198 L792 204 L782 210 Z" fill="var(--muted)"/>
+  <rect x="794" y="112" width="216" height="184" fill="var(--surface)" stroke="var(--line)"/>
+  <rect x="794" y="112" width="216" height="6" fill="var(--good)"/>
+  <text class="box-title" x="812" y="148" fill="var(--ink)">Revisar y corregir</text>
+  <text class="label" x="812" y="181" fill="var(--ink)">QA en otra sesión/familia</text>
+  <text class="label" x="812" y="207" fill="var(--ink)">Correcciones por el junior</text>
+  <text class="small" x="812" y="249" fill="var(--muted)">La revisión alimenta el arreglo;</text>
+  <text class="small" x="812" y="269" fill="var(--muted)">no es solo un sello final.</text>
+  <line x1="1012" y1="204" x2="1036" y2="204" stroke="var(--muted)" stroke-width="2" fill="none"/>
+  <path d="M1036 198 L1046 204 L1036 210 Z" fill="var(--muted)"/>
+  <rect x="1048" y="112" width="200" height="184" fill="var(--surface)" stroke="var(--line)"/>
+  <rect x="1048" y="112" width="200" height="6" fill="var(--good)"/>
+  <text class="box-title" x="1066" y="148" fill="var(--ink)">Puerta y entrega</text>
+  <text class="label" x="1066" y="181" fill="var(--ink)">check_scope.py + pruebas</text>
+  <text class="label" x="1066" y="207" fill="var(--ink)">Puerta → integración</text>
+  <text class="label" x="1066" y="233" fill="var(--ink)">Informe con costo</text>
+  <text class="label" x="1066" y="259" fill="var(--ink)">cost_report.py</text>
+  <line x1="32" y1="326" x2="1248" y2="326" stroke="var(--line)" fill="none"/>
+  <text class="label" x="32" y="354" fill="var(--muted)">La frontera coordina y describe la solución; la puerta de alcance y pruebas antecede a la integración.</text>
+</svg>

@@ -4,7 +4,7 @@ Skill para coordinar equipos de agentes de código en Orca: la frontera orquesta
 
 ## Qué es y para quién
 
-EzOrca toma un encargo escrito en palabras y lo convierte en un Run de Orca con varios agentes: uno caro que razona el plan, escribe los encargos, integra y acepta; y varios económicos, gratis o locales que escriben todo el código y las pruebas. La meta es un resultado de nivel frontera con la mitad del costo o menos (meta de diseño; la medición de costo está en curso).
+EzOrca toma un encargo escrito en palabras y lo convierte en un Run de Orca con varios agentes: uno caro que razona el plan, escribe los encargos, integra y acepta; y varios económicos, gratis o locales que escriben todo el código y las pruebas. La meta es un resultado de nivel frontera con la mitad del costo o menos (meta de diseño; la primera medición real está en docs/evaluation.md: en una tarea chica un solo modelo medio fue más barato, y EzOrca dio más calidad).
 
 Es para quien ya usa Orca con uno o más agentes de código (Claude Code, Codex, OpenCode u otro que Orca liste) y quiere delegar trabajo real sin pagar modelos caros por escribir líneas. También sirve para comparar dos versiones de una skill con evidencia, en vez de a ojo.
 
@@ -46,6 +46,10 @@ Puedes añadir «entrega normal» (predeterminada) o «entrega verificada». El 
 - En 9 simulacros con 45 criterios fijos, la versión candidata medida obtuvo 39/45 frente a 21–23/45 de la versión anterior, con 1 repetición y jueces LLM ciegos. La versión publicada incluye ediciones posteriores (correcciones de texto, scripts y papeles adaptativos) que no se volvieron a medir completas; método y límites en [docs/evaluation.md](docs/evaluation.md).
 - En dos tareas reales de un proyecto Rust privado, el equipo económico igualó y superó la solución de referencia según una revisión ciega; ninguna sesión de frontera escribió código.
 - Son señales, no garantías: hay una sola repetición por caso y el juicio lo hace un modelo. Método y límites en [docs/evaluation.md](docs/evaluation.md).
+
+![A/B real: calidad y tokens](docs/img/ab-results.svg)
+
+En un A/B real, implementar `scripts/cost_report.py` con el mismo contrato para ambos lados: con EzOrca el juez ciego dio 14/15 casos límite y 0 bloqueantes; sin EzOrca, 9/15 y 1 bloqueante. Sin EzOrca fue más barato y rápido en esa tarea chica; EzOrca gastó más tokens y entregó más calidad. Detalle y límites en [docs/evaluation.md](docs/evaluation.md).
 
 ## Estructura del repo
 
