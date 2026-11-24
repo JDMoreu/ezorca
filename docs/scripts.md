@@ -133,6 +133,32 @@ python <skill>/scripts/compare_skill_results.py cases.json baseline.json candida
 
 Acepta solo con más aciertos totales, ninguno menos por par caso–criterio y todos los críticos aprobados en cada repetición. Opciones: los posicionales `rubric`, `baseline` y `candidate`. Exit 0 si acepta; 1 si rechaza, con las regresiones; 2 si los datos son inválidos o incompletos.
 
+## cost_report.py
+
+Resume los tokens de cada sesión de Claude Code, Codex y OpenCode leyendo sus registros locales, sin leer ni imprimir contenidos, credenciales ni rutas. Entrada: `~/.claude/projects`, `~/.codex/sessions` y `~/.local/share/opencode/opencode.db` (o las rutas que pases). Paso del Run: **medir el costo**, al cerrar una tanda o un Run.
+
+```bash
+python <skill>/scripts/cost_report.py --since 2026-11-24T00:00:00Z --until 2026-11-25T00:00:00Z
+```
+
+```json
+{"sessions": [{"agent": "codex", "session": "cx1", "model": "gpt-x",
+  "started_at": "2026-11-24T09:00:00Z", "ended_at": "2026-11-24T09:10:00Z",
+  "input_tokens": 90, "output_tokens": 30, "cache_read_tokens": 60, "cache_write_tokens": 0,
+  "reasoning_tokens": 8, "total_tokens": 180}],
+ "totals": {"claude": {"sessions": 0, "input_tokens": 0, "output_tokens": 0, "cache_read_tokens": 0,
+   "cache_write_tokens": 0, "reasoning_tokens": 0, "total_tokens": 0}, "codex": {"sessions": 1,
+   "input_tokens": 90, "output_tokens": 30, "cache_read_tokens": 60, "cache_write_tokens": 0,
+   "reasoning_tokens": 8, "total_tokens": 180}, "opencode": {"sessions": 0, "input_tokens": 0,
+   "output_tokens": 0, "cache_read_tokens": 0, "cache_write_tokens": 0, "reasoning_tokens": 0,
+   "total_tokens": 0}},
+ "warnings": []}
+```
+
+`total_tokens` suma entrada, salida, caché leída y caché escrita; `reasoning_tokens` se informa aparte. En Claude cada `message.id` cuenta una sola vez (usa la última aparición), en Codex se usa el último `token_count`, que ya es acumulado, con `input_tokens` descontando lo cacheado, y en OpenCode una fila de `session_v2` (o de `session` si aquella no existe) es una sesión, la base se abre en modo solo lectura y un `model` en JSON se informa por su `id`. Las sesiones salen ordenadas por `started_at` y, si falta una fuente, se anota en `warnings` sin impedir el informe.
+
+Opciones: `--claude-dir DIR`, `--codex-dir DIR`, `--opencode-db FILE` (por omisión las rutas de arriba), `--since ISO` y `--until ISO` (sin zona = UTC; una sesión cuenta si su intervalo cruza el rango), `--session ID` (repetible), `--no-claude`, `--no-codex`, `--no-opencode`. Exit 0 con el informe; 2 si una fecha está mal formada o una ruta pasada explícitamente no existe.
+
 ## tiers.json
 
 Reglas de `discover.py`: gana la primera que coincide (regex, sin distinguir mayúsculas) y, si ninguna, `default`.

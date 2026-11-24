@@ -16,6 +16,7 @@ La regla general: si un script existe para un paso, úsalo en vez de hacerlo a m
 | `<skill>/scripts/check_scope.py` | En la puerta de integración, con los archivos permitidos del encargo | `python <skill>/scripts/check_scope.py --repo <repo> --allowed "src/**" --allowed "tests/**"` | 0: solo tocó lo permitido; 1: `outside` lista archivos de más, rechaza o devuelve el cambio; 2: el repo o la base no existen |
 | `<skill>/scripts/eval_kit.py` | Al preparar y juzgar una evaluación ciega de skills | `python <skill>/scripts/eval_kit.py --dir <carpeta de evaluación> exec --variant-dir <skill> --label baseline --template exec.md` (luego `pair` y `merge`) | 0: sigue con el paso siguiente; 1: `merge` encontró juicios faltantes, complétalos; 2: datos o rutas inválidos |
 | `<skill>/scripts/compare_skill_results.py` | Al cerrar la evaluación, tras `merge` | `python <skill>/scripts/compare_skill_results.py cases.json baseline.json candidate.json` | 0: acepta la candidata; 1: la rechaza, informa las regresiones; 2: datos inválidos o incompletos |
+| `<skill>/scripts/cost_report.py` | Para medir el costo real de un Run con los registros locales de cada agente | `python <skill>/scripts/cost_report.py --since 2026-11-24T00:00:00Z` | 0: lee `sessions` y `totals` (si falta una fuente, aparece en `warnings`); 2: una fecha o una ruta pasada a mano no existe, corrígela |
 
 ## Tanda para launch_wave
 
