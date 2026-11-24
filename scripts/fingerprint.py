@@ -72,10 +72,12 @@ def main(argv: list[str] | None = None) -> int:
 
     code, head, err = git(args.repo, "rev-parse", "HEAD")
     if code != 0:
-        return fail(f"no es un repositorio git con HEAD válido: {err.decode("utf-8", "replace").strip()}")
+        detail = err.decode("utf-8", "replace").strip()
+        return fail(f"no es un repositorio git con HEAD válido: {detail}")
     code, diff, err = git(args.repo, "diff", "HEAD", "--binary")
     if code != 0:
-        return fail(f"git diff falló: {err.decode("utf-8", "replace").strip()}")
+        detail = err.decode("utf-8", "replace").strip()
+        return fail(f"git diff falló: {detail}")
     code, untracked = untracked_files(args.repo)
     if code != 0:
         return fail("git ls-files falló")
