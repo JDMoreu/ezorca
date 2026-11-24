@@ -1,0 +1,285 @@
+{
+  "repeats": 1,
+  "notes": "Rúbrica de 9 casos fijos y 45 criterios para evaluar cambios de la skill. Cribado con 1 repetición; ampliar a 2 solo en los pares que cambien. Los criterios marcados como críticos bloquean la aceptación si fallan. v4: criterios alineados con las decisiones del usuario (por defecto la frontera no escribe código, escalera de modelos, «avisa y sigue»).",
+  "cases": [
+    {
+      "id": "entrega-normal-pequena",
+      "prompt": "Usa EzOrca para corregir la falta de ortografía «recivir» en README.md de este repositorio y correr las pruebas del proyecto. Tengo instalados Claude, Codex y OpenCode.",
+      "criteria": [
+        {
+          "id": "modalidad-normal",
+          "description": "El plan elige entrega normal y no lanza ningún Goldfish verificador independiente ni un segundo pase.",
+          "critical": true
+        },
+        {
+          "id": "pruebas-como-comprobacion",
+          "description": "Las pruebas del proyecto se tratan como comprobación habitual (la spec pide correrlas y devolver el resultado), no como motivo para pasar a la modalidad verificada.",
+          "critical": true
+        },
+        {
+          "id": "equipo-minimo",
+          "description": "Usa un solo Goldfish ejecutor (o ninguno, justificándolo) para el cambio de una línea; no arma PM/senior/QA separados.",
+          "critical": false
+        },
+        {
+          "id": "turno",
+          "description": "Tras arrancar el Goldfish indica que termina el turno y espera a que Orca lo despierte, sin sondeo ni scripts de espera.",
+          "critical": true
+        },
+        {
+          "id": "usuario-sin-carga",
+          "description": "El usuario no tiene que correr comandos ni elegir agentes o modalidades; el coordinador decide e informa el resultado en lenguaje simple.",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "entrega-verificada-dos-pases",
+      "prompt": "Usa EzOrca con entrega verificada para añadir validación de rango (1 a 65535) a parse_port en src/config.rs, con pruebas. Tengo Claude y Codex.",
+      "criteria": [
+        {
+          "id": "version-fijada",
+          "description": "Antes de verificar, el plan fija la versión con un commit existente o una huella que incluya los cambios sin confirmar y los archivos nuevos.",
+          "critical": true
+        },
+        {
+          "id": "verificador-ciego",
+          "description": "La spec del verificador incluye el encargo, los criterios, la versión y las rutas, y omite la conversación, el reporte del ejecutor y los veredictos anteriores.",
+          "critical": true
+        },
+        {
+          "id": "dos-pases-limpios",
+          "description": "El plan cierra solo con dos pases limpios en sesiones nuevas sobre la misma versión y reinicia el conteo ante un cambio de versión, un criterio incumplido o un hallazgo bloqueante o mayor.",
+          "critical": true
+        },
+        {
+          "id": "veredicto-estructurado",
+          "description": "La spec del verificador pide versión, resultado por criterio, evidencia reproducible y hallazgos con severidad bloqueante, mayor o menor.",
+          "critical": false
+        },
+        {
+          "id": "presupuesto",
+          "description": "El plan declara el tope de cinco rondas de corrección y dos horas, o el que haya dado el usuario.",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "revision-proporcional",
+      "prompt": "Usa EzOrca para revisar en solo lectura si C:/repo/ejemplo.excalidraw refleja bien las secciones de ~/.agents/skills/ezorca/SKILL.md (42 líneas): modalidades de entrega, bucle verificado y mejora de skills. Quiero saber qué discrepancias hay. Tengo Claude, Codex y OpenCode.",
+      "criteria": [
+        {
+          "id": "goldfish-proporcionados",
+          "description": "Lanza como máximo 2 Goldfish, o justifica cada adicional con una perspectiva, agente o archivo distinto; ningún Goldfish recibe solo la tarea de resumir una sección de SKILL.md sin contrastarla con el diagrama.",
+          "critical": true
+        },
+        {
+          "id": "comprobaciones-enumeradas",
+          "description": "Cada spec enumera comprobaciones concretas y pide un resultado por comprobación (cumple, no cumple o no verificable) con evidencia por ID de elemento o encabezado.",
+          "critical": true
+        },
+        {
+          "id": "metodo-y-limites",
+          "description": "Cada spec pide declarar qué se leyó directamente y qué se dedujo (por ejemplo, si las conexiones salen de bindings reales o de los IDs).",
+          "critical": false
+        },
+        {
+          "id": "reporte-legible",
+          "description": "Las specs fijan cómo se devuelve el detalle: un archivo de reporte (o --report-path) para lo extenso y un cuerpo de worker_done corto con veredicto, hallazgo principal y pendiente.",
+          "critical": false
+        },
+        {
+          "id": "sin-delegacion-implicita",
+          "description": "Las specs no dependen de una coletilla para impedir que el Goldfish delegue: o la regla por defecto del Goldfish ya es no delegar, o el plan la menciona una sola vez como política del Run.",
+          "critical": false
+        },
+        {
+          "id": "arranque-y-turno",
+          "description": "Arranca los Goldfish independientes juntos desde un solo comando de shell con --environment local y --worktree current, y termina el turno sin sondear.",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "reparto-por-papeles",
+      "prompt": "Usa EzOrca para añadir a src/board/ un comando `brd export --format csv` que exporte el tablero (tareas, estado, agente, fechas) con pruebas y documentación en el README. Tengo Claude, Codex y OpenCode (OpenCode usa un modelo gratis menos capaz). Entrega normal.",
+      "criteria": [
+        {
+          "id": "papeles-por-riesgo",
+          "description": "Asigna papeles según riesgo y ambigüedad: un modelo de frontera (Claude o Codex) define alcance, criterios y el diseño o encargo; el trabajo cerrado y repetitivo (implementación guiada, pruebas según el encargo, documentación) va al agente económico.",
+          "critical": true
+        },
+        {
+          "id": "encargo-junior-cerrado",
+          "description": "La spec del implementador económico es autocontenida: archivos que puede editar, interfaz esperada, casos de prueba de aceptación concretos y comandos de comprobación con su resultado esperado.",
+          "critical": true
+        },
+        {
+          "id": "qa-otra-familia",
+          "description": "La revisión del trabajo la hace un agente distinto del implementador (otra familia si existe) y revisa evidencia, sin rehacer la implementación.",
+          "critical": false
+        },
+        {
+          "id": "escalado",
+          "description": "Define qué pasa si el implementador económico falla: tras un número acotado de intentos (p. ej., dos) la tarea sube a un modelo más capaz (escalón superior), no a más reintentos con el mismo modelo.",
+          "critical": false
+        },
+        {
+          "id": "sin-burocracia",
+          "description": "No añade papeles ni pases que no aporten (p. ej., no usa la modalidad verificada ni dos pases, ni más de 3 Goldfish en total para esta tarea).",
+          "critical": true
+        },
+        {
+          "id": "modelos-en-vivo",
+          "description": "Elige modelos a partir de lo que descubre en ese momento (p. ej. `orca agent installed --json`, `opencode models` o una caché regenerada), no de una lista fija escrita en la skill, y justifica cada elección por capacidad y costo.",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "solo-un-agente",
+      "prompt": "Usa EzOrca para refactorizar src/app/tasks.py separando la persistencia en un módulo nuevo, con pruebas. Solo tengo Codex disponible (Claude y OpenCode sin cuota). Entrega normal.",
+      "criteria": [
+        {
+          "id": "solo-agentes-disponibles",
+          "description": "Todos los worker-start usan --agent codex; no planea Claude, OpenCode ni otros agentes.",
+          "critical": true
+        },
+        {
+          "id": "papeles-dentro-de-un-agente",
+          "description": "Mantiene la separación de papeles necesaria (quien implementa y quien revisa) usando sesiones distintas del mismo agente; la revisión va en una sesión nueva sin el reporte ni la conversación del implementador.",
+          "critical": true
+        },
+        {
+          "id": "modelo-solo-autorizado",
+          "description": "Fija --model o --effort solo con autorización: del usuario, de una configuración declarada o de la política de escalado acordada (subir un escalón avisando); antes de usar un modelo de frontera o esfuerzo alto, pregunta.",
+          "critical": true
+        },
+        {
+          "id": "spec-aislada",
+          "description": "Si hay varios editores concurrentes, los separa con worktrees y delimita archivos; si hay uno solo, usa el workspace actual.",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "reparto-mixto-con-caida",
+      "prompt": "Usa EzOrca para generar pruebas unitarias de src/app/summarizer.py hasta cubrir sus funciones públicas. Tengo Claude y OpenCode; Codex no. Describe también qué harás si el worker de OpenCode falla al arrancar con agent_readiness o se queda sin cuota a mitad de la tarea.",
+      "criteria": [
+        {
+          "id": "asignacion-inicial",
+          "description": "Asigna la escritura de pruebas (trabajo repetitivo y cerrado) a OpenCode; la definición de criterios y la revisión no las hace el implementador (las hace el coordinador o Claude).",
+          "critical": true
+        },
+        {
+          "id": "reasignacion",
+          "description": "Ante agent_readiness o falta de cuota, no reintenta a ciegas: sigue la recuperación de Orca (failedStage o estado del worker) y reasigna la tarea pendiente a otro candidato disponible según la política declarada (otro modelo u otro agente).",
+          "critical": true
+        },
+        {
+          "id": "aviso",
+          "description": "Avisa al usuario del cambio de agente y de su efecto en coste o suscripción, en lugar de hacerlo en silencio.",
+          "critical": false
+        },
+        {
+          "id": "qa-independiente-tras-caida",
+          "description": "Tras la caída y la reasignación, la revisión sigue en una sesión que no vio la implementación.",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "mejora-skill-proporcional",
+      "prompt": "Usa EzOrca para mejorar la skill ~/.agents/skills/ezorca (SKILL.md de 42 líneas): los Goldfish delegan cuando no deberían y los reportes llegan apretados. Tengo Claude y Codex y una tarde de presupuesto.",
+      "criteria": [
+        {
+          "id": "casos-antes-de-medir",
+          "description": "Fija cases.json antes de medir, con al menos un caso que reproduce el problema y uno que la versión actual ya resuelve, e IDs y criterios críticos estables.",
+          "critical": true
+        },
+        {
+          "id": "ejecucion-en-modo-plan",
+          "description": "Los ejecutores de los intentos escriben el plan del coordinador sin correr worker-start; no lanzan Goldfish anidados por intento.",
+          "critical": true
+        },
+        {
+          "id": "sesiones-acotadas",
+          "description": "Estima el total de sesiones (ejecutores, jueces y editor) y lo mantiene proporcional al presupuesto.",
+          "critical": false
+        },
+        {
+          "id": "jueces-ciegos",
+          "description": "Los jueces reciben el caso, la rúbrica y la salida sin el nombre de la variante, información del editor ni resultados previos.",
+          "critical": true
+        },
+        {
+          "id": "decision-humana",
+          "description": "Entrega el informe del comparador y la candidata para que el usuario decida, sin reemplazar la skill instalada por su cuenta.",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "presupuesto-eficiente",
+      "prompt": "Usa EzOrca para implementar en src/board/ cinco mejoras independientes: (1) paginación en `brd list`, (2) filtro por agente, (3) exportar a JSON, (4) mensajes de error en español neutro y (5) pruebas para las cuatro anteriores. Tengo Claude (Opus, caro), Codex y OpenCode con varios modelos. Quiero calidad de frontera gastando lo menos posible.",
+      "criteria": [
+        {
+          "id": "frontera-acotada",
+          "description": "Planea como máximo 2 sesiones de modelos de frontera (Claude u Codex) además del coordinador y las reserva para razonar (diseño, encargos, revisión de riesgo), sin asignarles de entrada implementación mecánica. Escalar una tarea a frontera tras fallos repetidos de un modelo económico está permitido y no cuenta para ese límite.",
+          "critical": true
+        },
+        {
+          "id": "mayoria-economica",
+          "description": "La mayoría de las sesiones de implementación van a agentes o modelos económicos (p. ej. OpenCode).",
+          "critical": true
+        },
+        {
+          "id": "specs-descriptivas",
+          "description": "Las specs para modelos económicos son muy descriptivas: archivos permitidos, interfaz o firma esperada, pasos, ejemplo de entrada y salida, y comandos de comprobación con su resultado esperado.",
+          "critical": true
+        },
+        {
+          "id": "escalado-por-fallo",
+          "description": "Define que un fallo repetido del modelo económico (p. ej. dos intentos) sube esa tarea a un modelo más capaz (escalón superior), no a más reintentos con el mismo modelo.",
+          "critical": false
+        },
+        {
+          "id": "descubrimiento-de-modelos",
+          "description": "Consulta en ese momento los agentes y modelos disponibles (p. ej. `orca agent installed --json`, `opencode models`) y elige por capacidad y costo; fija --model solo con esa justificación y avisa al usuario.",
+          "critical": false
+        },
+        {
+          "id": "paralelo-y-aislado",
+          "description": "Arranca en paralelo las tareas independientes (en tandas de hasta unas 4), separando editores concurrentes con worktrees y archivos delimitados.",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "encargo-ambiguo",
+      "prompt": "Usa EzOrca para que la app responda más rápido.",
+      "criteria": [
+        {
+          "id": "contexto-propio",
+          "description": "Antes de preguntar, el plan reúne por su cuenta el contexto que puede obtener (p. ej. logs de latencia, código del pipeline, pruebas o métricas existentes) en lugar de pedírselo al usuario.",
+          "critical": true
+        },
+        {
+          "id": "preguntas-en-una-tanda",
+          "description": "Hace las preguntas que cambian el plan (p. ej. qué etapa o latencia objetivo, cómo se medirá el éxito, presupuesto o agentes) en una sola tanda corta, con una opción recomendada en cada una.",
+          "critical": true
+        },
+        {
+          "id": "no-lanza-a-ciegas",
+          "description": "No lanza Goldfish de implementación antes de tener un criterio de éxito medible (dado por el usuario o propuesto y confirmado).",
+          "critical": true
+        },
+        {
+          "id": "usuario-sin-jerga",
+          "description": "Lo que se le muestra al usuario está en lenguaje simple, sin pedirle comandos de Orca ni decisiones técnicas que el coordinador puede tomar.",
+          "critical": false
+        }
+      ]
+    }
+  ]
+}
