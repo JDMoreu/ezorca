@@ -4,14 +4,14 @@ Skill para resolver tareas de código directamente en el chat o coordinar equipo
 
 ## Qué es y para quién
 
-EzOrca decide primero entre trabajar directo en el chat o coordinar un Run de Orca. En un Run, un modelo caro planea, escribe los encargos, integra y acepta. Los modelos económicos, gratis o locales escriben el código y las pruebas. La meta de diseño era un resultado de nivel frontera con la mitad del costo o menos. EzOrca ahora elige el modo antes de planear porque, en el A/B justo, coordinar las tareas chica y mediana costó más sin una mejora concluyente de calidad. [Evaluación](docs/evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca)
+EzOrca elige entre trabajar directo en el chat, delegar a un ejecutor con validador o coordinar un Run de Orca. El chat puede usar cualquier modelo y pide un planificador de frontera en una sesión nueva cuando la tarea lo requiere. La meta de diseño era un resultado de nivel frontera con la mitad del costo o menos. EzOrca elige el modo antes de planear porque, en el A/B justo, coordinar las tareas chica y mediana costó más sin una mejora concluyente de calidad. [Evaluación](docs/evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca)
 
 Es para quien ya usa Orca con uno o más agentes de código (Claude Code, Codex, OpenCode u otro que Orca liste) y quiere delegar trabajo real sin pagar modelos caros por escribir líneas. También sirve para comparar dos versiones de una skill con evidencia, en vez de a ojo.
 
 ## Ideas clave
 
-- **Elefante y Goldfish, por ejemplo.** El Elefante suele ser el modelo de tu chat: piensa, planifica, reparte, revisa y acepta. Los Goldfish son los modelos económicos que ejecutan. En un Run coordinado la frontera no escribe código, ni las pruebas, ni las ediciones triviales; el usuario puede indicar otra cosa.
-- **Directo o coordinado.** Antes de planear, EzOrca anuncia el modo y el motivo en una línea. Por defecto, el modelo del chat hace las tareas chicas y medianas y, si tocan lógica, suma un QA barato en otra sesión.
+- **Elefante y Goldfish, por ejemplo.** El Elefante es el chat principal y puede ser cualquier modelo. Conserva el contexto, encarga el trabajo y acepta el resultado. Los Goldfish ejecutan o revisan con el modelo y el esfuerzo que pide su papel.
+- **Modo inteligente.** Antes de planear, EzOrca estima el tamaño, las partes independientes y el riesgo, y usa `choose_mode.py` para elegir la opción de menor costo que cumple los requisitos. Anuncia el modo, el motivo y el costo estimado.
 - **Papeles adaptativos.** Cada Run coordinado define los papeles según el encargo y los asigna por capacidad, costo y disponibilidad. Por ejemplo, un cambio riesgoso puede sumar diseño senior y un QA de otra familia.
 - **Escalera de modelos.** Económico o gratis → económico capaz → modelo medio → y como último recurso la frontera describe la solución para que la escriba un modelo barato. Dos fallos en la misma tarea obligan a subir un escalón.
 - **Avisa y sigue.** Al escalar o reasignar, el coordinador avisa en una línea qué cambia, por qué y cuánto cuesta. Pregunta solo si abriría una sesión de frontera nueva o si se supera el presupuesto acordado.

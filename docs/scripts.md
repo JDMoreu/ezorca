@@ -16,6 +16,62 @@ python <skill>/scripts/discover.py --cache <carpeta del Run>/roster.json
 
 `warnings` aparece si un comando falló sin impedir el informe. Opciones: `--cache RUTA` (si está fresca y contiene JSON válido, no ejecuta comandos), `--max-age-hours HORAS` (12). En Windows, una ruta estilo Git Bash como `/c/Users/x/roster.json` se interpreta como `C:/Users/x/roster.json`, al leer y al escribir la caché. Si la caché contiene JSON inválido, se regenera, y si hay un error de lectura, sale con exit 2 y el mensaje `error: no se pudo leer la caché en <ruta>: <detalle>` en stderr. Si la caché no se puede escribir, sale con exit 2 y el mensaje `error: no se pudo escribir la caché en <ruta>: <detalle>` en stderr. El informe se emite con exit 0. Si no se pudo leer el entorno, sale con exit 2.
 
+## choose_mode.py
+
+Se ejecuta antes de planear. Estima el costo de los modos directo, delegado y coordinado y elige el más barato que cumple los requisitos.
+
+```text
+python <skill>/scripts/choose_mode.py --chat-tier NIVEL --size {trivial,chica,mediana,grande}
+    [--parts N] [--risk {bajo,alto}] [--verified] [--chat-no-code]
+    [--available NIVEL[,NIVEL...]] [--prefer {auto,directo,delegado,coordinado}]
+```
+
+`--parts` cuenta las partes independientes, admite de 1 a 50 y vale 1 por defecto. El riesgo predeterminado es `bajo`. Usa `--verified` para la entrega verificada y `--chat-no-code` cuando el chat no deba escribir código. `--available` indica los niveles con cuota y toma todos por defecto. `--prefer` vale `auto` por defecto. Si se pide un modo y resulta factible, el script lo usa. Si el modo pedido resulta inviable, el script elige en automático y explica el motivo en `reason`. En empate, gana el modo con menos sesiones, en orden directo, delegado y coordinado.
+
+Ejemplo con `--chat-tier frontera --size mediana`:
+
+```json
+{
+  "mode": "directo",
+  "reason": "El selector eligió directo por costo y número de sesiones.",
+  "options": {
+    "directo": {"feasible": true, "cost": 43.0, "why": "El chat implementa."},
+    "delegado": {"feasible": true, "cost": 76.0, "why": "Un ejecutor implementa."},
+    "coordinado": {"feasible": true, "cost": 76.0, "why": "Un Run coordina la ejecución."}
+  },
+  "roles": [
+    {"role": "validador", "tier": "economico-capaz", "effort": "medio", "family": "distinta si hay; si no, sesión nueva ciega del mismo agente"}
+  ],
+  "ask_user": false
+}
+```
+
+Los textos de `reason` y `why` explican la decisión y la factibilidad. `roles` contiene los papeles del modo elegido. Si `ask_user` es `true`, pregunta antes de abrir una sesión de frontera. El código de salida es 0 si hay un modo factible, 1 si ningún modo es factible (`mode: null` en el JSON) y 2 si los argumentos son inválidos (`error:` en stderr).
+
+### Pesos y tamaños
+
+Los costos son estimaciones relativas calibradas con el [A/B justo](evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca).
+
+| Nivel | Peso |
+|---|---:|
+| `gratis` | 0,2 |
+| `economico` | 1 |
+| `economico-capaz` | 2 |
+| `medio` | 4 |
+| `frontera` | 10 |
+
+| Tamaño | Trabajo | Nivel mínimo del ejecutor | Esfuerzo del ejecutor |
+|---|---:|---|---|
+| `trivial` | 1 | `gratis` | `bajo` |
+| `chica` | 2 | `economico` | `bajo` |
+| `mediana` | 4 | `economico-capaz` | `medio` |
+| `grande` | 10 | `medio` | `alto` |
+
+- Implementar cuesta el trabajo multiplicado por el peso del nivel del chat o del ejecutor. El riesgo alto sube un escalón el nivel requerido. En modo delegado o coordinado, el ejecutor llega como máximo a `medio`. Si la tarea exige más capacidad, la frontera planifica y describe la solución y un ejecutor de nivel medio la escribe.
+- Coordinar cuesta al chat `(4,8 + 0,4 × trabajo) × peso del chat`. Cada sesión adicional suma 1. El modo delegado cuenta una sesión de ejecución y el coordinado cuenta una por parte independiente.
+- Cada pase de validación suma el peso del validador más 1 por la sesión. Se usa el nivel disponible más barato desde `economico-capaz`, con esfuerzo medio. Con riesgo alto se usa frontera con esfuerzo alto. La revisión va a otra familia si hay una o a una sesión nueva y ciega del mismo agente. La entrega verificada siempre cuenta dos pases, incluso para tareas triviales. Una tarea trivial con entrega normal no lleva validación.
+- Una tarea grande, con riesgo alto o con al menos tres partes independientes requiere un planificador de frontera con esfuerzo alto. Su costo es 21, incluida la sesión. Estos requisitos y la entrega verificada exigen el modo coordinado.
+
 ## check_spec.py
 
 Comprueba que los encargos traen lo mínimo para un modelo económico. Entrada: archivos Markdown. Paso del Run: **antes de lanzar la tanda**, sobre todos los encargos.

@@ -1,14 +1,14 @@
 # Arquitectura de EzOrca
 
-EzOrca primero decide si conviene trabajar directo o coordinar. En un Run
-coordinado, una sesión planea y revisa, y otras escriben el código.
-[¿Coordinar o hacerlo directo?](../SKILL.md#coordinar-o-hacerlo-directo)
+EzOrca elige el modo antes de planear. El chat puede implementar, delegar a un
+ejecutor con validador o coordinar un Run completo.
+[Modo inteligente](../SKILL.md#modo-inteligente-la-opción-más-barata-que-cumpla)
 
 ## Elefante y Goldfish
 
 | Sesión | Qué es | Qué tiene en la cabeza |
 |---|---|---|
-| **Elefante** | El chat que recibe el encargo. Es el PM del Run. | Todo el Run: objetivo, criterios, plan, decisiones, reportes y costo. |
+| **Elefante** | El chat que recibe el encargo. Puede usar cualquier modelo. | El contexto del encargo, los criterios, las decisiones, los reportes y el costo. |
 | **Goldfish** | Un worker de Orca (`worker-start`), con contexto nuevo. | Solo su encargo, las rutas que cita y su tarea. Nada del resto del Run. |
 
 El Goldfish no recuerda nada entre tareas: por eso cada encargo lleva rutas
@@ -32,26 +32,23 @@ Papeles habituales, como ejemplo:
 |---|---|---|---|
 | Elefante (PM) | El modelo de este chat | Estrategia, plan, registro, encargos, decisiones, integración y aceptación | Escribir código ni pruebas, ni siquiera ediciones triviales |
 | Senior | Modelo caro o de esfuerzo alto | Diseño difícil, casos de aceptación de riesgo, revisión de riesgo, describir la solución | Escribir código; trabajo repetitivo o ya bien definido |
-| Junior | Modelo económico, gratis o local | Todo el código y las pruebas, con un encargo detallado | Decisiones de diseño abiertas |
+| Ejecutor | Modelo de nivel medio o inferior | Todo el código y las pruebas, con un encargo detallado | Decisiones de diseño abiertas |
 | QA | Otra familia de agente, o sesión nueva y ciega | Revisar el resultado contra los criterios, sin ver el razonamiento del implementador | Corregir lo que revisa |
 
-Se arma solo lo que aporte; un Run con otra tarea puede inventar los papeles que
-le sirvan:
+Antes de planear, el Elefante estima tamaño, partes independientes y riesgo.
+`choose_mode.py` aplica los requisitos, estima el costo de cada opción y elige
+la más barata que cumple. Con todos los niveles disponibles y riesgo bajo:
 
-| Encargo | Equipo |
-|---|---|
-| Trivial (una errata, una edición mecánica) | Directo: lo hace el modelo del chat. Sin QA. |
-| Pequeño y bien definido | Directo, con un pase QA en otra sesión si toca lógica. |
-| Mediano | Directo y un QA si es un área contenida; coordinado (juniors en paralelo, unos 4 por tanda y modelo, cada uno en su worktree, y un QA) si tiene tres o más partes independientes o mucho trabajo mecánico. |
-| Riesgoso (seguridad, datos, concurrencia, arquitectura) | Senior para el diseño y los casos de aceptación, juniors para escribirlo, QA de otra familia que compruebe también si las pruebas cubren esos casos. |
+- `--chat-tier frontera --size mediana` → directo, con costo 43 frente a 76 en los otros modos.
+- `--chat-tier economico --size mediana` → delegado, con costo 18,4. Empata con el Run coordinado y gana por requerir menos sesiones.
+- `--chat-tier economico --size grande --parts 4` → coordinado, con costo 76,8 y un planificador de frontera. Con `ask_user: true`, el chat pregunta antes de abrir la sesión.
 
-## En un Run coordinado, la frontera no escribe código
+## Límite del nivel del ejecutor
 
-En un Run coordinado, la frontera no escribe código; el usuario puede indicar otra cosa.
-El Elefante y toda sesión cara (Opus, Codex en esfuerzo alto u otro modelo de
-frontera) orquestan, planean, escriben encargos y revisan. Todo el código,
-incluidas las pruebas y las ediciones triviales, lo escriben Goldfish económicos,
-gratis o locales.
+En los modos delegado y coordinado, el ejecutor llega como máximo al nivel
+`medio`. Si la tarea exige más capacidad, un planificador de frontera diseña
+y describe la solución y un ejecutor de nivel medio escribe el código y las
+pruebas.
 
 El motivo es doble. Primero, el costo: los tokens de frontera son el recurso
 escaso, y escribir boilerplate con ellos es la forma más rápida de gastar el
@@ -61,14 +58,13 @@ revisión honesta y permite repetir el trabajo barato sin repetir el caro.
 
 Si algo es difícil, la frontera describe la interfaz, los casos
 con entrada y resultado esperado, los pasos y el archivo y el símbolo que hay que
-cambiar, y un junior lo escribe. Resolver un conflicto al integrar también es
-escribir código: va a un junior con su propio encargo.
+cambiar. Resolver un conflicto al integrar también requiere un encargo para
+un ejecutor.
 
 Con el mismo modelo fuerte en el chat, coordinar las tareas chica y mediana
 usó 2,8 y 1,6 veces los tokens de salida del modelo caro y tardó 1,8 y 2,8
-veces más, respectivamente, sin una mejora concluyente de calidad. En
-encargos así, el chat trabaja directo y suma un QA barato si el cambio toca
-lógica.
+veces más, respectivamente, sin una mejora concluyente de calidad. El selector
+usa estas cifras para estimar el costo de coordinar.
 [A/B justo](evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca)
 
 ## Escalera de modelos
@@ -122,7 +118,7 @@ existan se saltan.
 | | Entrega normal | Entrega verificada |
 |---|---|---|
 | Cuándo | Es la predeterminada, también con «sin verificación» | El usuario la pide o el ciclo exige verificación independiente |
-| Revisión | **Un pase QA único** en una sesión distinta de la del implementador | Un Goldfish verificador nuevo, de otra familia si hay, en solo lectura |
+| Revisión | **Un pase QA único** en una sesión distinta de la del implementador para cambios no triviales | **Dos pases** en sesiones nuevas y ciegas, de otra familia si hay, incluso para cambios triviales |
 | Versión | No se fija | Se fija con un commit o una **huella** del conjunto verificable completo |
 | Cierre | Un pase; otra sesión solo si la corrección cambia el diseño | **Dos pases limpios consecutivos** sobre la misma huella |
 
@@ -153,7 +149,8 @@ registro, luego la memoria.
 
 Este documento y la skill explican el criterio: cuándo subir un escalón, qué
 papel armar, cómo redactar un encargo, qué aceptar. Los scripts hacen lo
-mecánico: comprobar que un encargo está completo, repartir el cupo de una tanda,
+mecánico: estimar el costo de cada modo y elegir el más barato que cumple,
+comprobar que un encargo está completo, repartir el cupo de una tanda,
 medir una huella, detectar un worker colgado, verificar el alcance de un cambio.
 
 La razón es simple: **las reglas en prosa se omiten**. Un modelo económico que

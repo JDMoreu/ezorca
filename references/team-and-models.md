@@ -22,13 +22,13 @@ puede indicar otro reparto.
 | Junior | Modelo económico, gratis o local | Todo el código y las pruebas, con encargo detallado | Decisiones de diseño abiertas |
 | QA | Otra familia de agente o sesión nueva y ciega | Revisión del resultado contra los criterios, sin ver el razonamiento del implementador | Corregir lo que revisa |
 
-Cuando la tarea es difícil, en un Run coordinado la frontera no la escribe: describe la interfaz, los casos con entrada y resultado esperado, los pasos y el archivo y el símbolo que hay que cambiar, y un junior la escribe. Resolver un conflicto al integrar también es escribir código: va a un junior. El usuario puede indicar otra cosa.
+En un Run coordinado, la frontera puede describir la interfaz, los casos con entrada y resultado esperado, los pasos, el archivo y el símbolo que hay que cambiar. Si la tarea exige más capacidad que la de un modelo medio, la frontera planifica y un ejecutor de nivel medio escribe. Los conflictos de integración también se asignan a un ejecutor.
 
-**Papeles adaptativos.** Los papeles no son una lista fija: cada Run define los que necesita la tarea y cualquier agente o modelo puede ocupar cualquiera según su capacidad, su costo y su disponibilidad. La política de costo por defecto se mantiene en un Run coordinado: los modelos caros razonan y casi nunca escriben código salvo que el usuario diga otra cosa; antes de planear, decide si conviene coordinar ([¿Coordinar o hacerlo directo?](../SKILL.md#coordinar-o-hacerlo-directo)). La revisión va en una sesión distinta de la del autor, de otra familia de agente si hay. La tabla siguiente es orientativa: no obliga a abrir una sesión por papel.
+**Papeles adaptativos.** Cada Run define los papeles que necesita según la capacidad, el costo y la disponibilidad de los modelos. En un Run coordinado, los modelos caros se dedican a razonar, salvo que el usuario diga otra cosa. El Elefante aplica el [modo inteligente](../SKILL.md#modo-inteligente-la-opción-más-barata-que-cumpla) antes de planear. Solo si `choose_mode.py` incluye al planificador de frontera en `roles`, el Elefante pide permiso para abrir esa sesión nueva. La revisión va en una sesión distinta de la del autor, de otra familia de agente si hay. La tabla siguiente es orientativa.
 
 | Papel de ejemplo | Qué hace | Modelo que suele convenir |
 |---|---|---|
-| Elefante (PM) | Coordina el Run, escribe los encargos, decide, integra y acepta | El modelo de este chat; caro |
+| Elefante (PM) | Coordina el Run, escribe los encargos, decide, integra y acepta | Cualquier modelo disponible en el chat |
 | Investigador | Busca, contrasta y resume fuentes antes de planear | Económico o medio, con acceso a web |
 | Arquitecto | Fija interfaces, descomposición y casos de aceptación | Medio o caro, solo razona |
 | Senior | Diseño difícil y revisión de riesgo | Caro; describe el código y en un Run coordinado no lo escribe |
@@ -57,6 +57,18 @@ Lanza un Goldfish por perspectiva que necesite contexto limpio, otro agente o su
 3. Clasifica cada opción como **económica**, **media** o **cara** según tu conocimiento actual de su capacidad y su costo, y ubícala en un escalón de la [escalera](#escalera-de-modelos). Las señales del nombre (flash, mini, lite, haiku, free frente a pro, opus o esfuerzo alto) orientan, pero no deciden. Si dudas, clasifícala como media y dilo en el plan.
 4. Si quieres, guarda la clasificación en una caché local regenerable, por ejemplo `<temp>/ezorca/models.json`, con la fecha y la fuente de cada entrada. Regénerala si tiene más de un día, si un arranque falla por un modelo no disponible o si cambian los agentes instalados. El usuario nunca mantiene esta lista.
 5. Consulta `orca orchestration worker-start --help` una vez por Run. Ahí se indica qué agentes aceptan `--model` y `--effort`. Para OpenCode, el modelo exige un worktree existente y no admite esfuerzo; con una sola tarea de edición, ese worktree es el workspace actual, no uno hijo nuevo; con varias tareas independientes, cada una usa su propio worktree.
+
+## Modo inteligente: cómo llenar el selector
+
+- **Nivel del chat (`--chat-tier`).** Clasifica tu modelo activo. Usa `frontera` para Opus, GPT Astra o Codex en esfuerzo alto. Usa `medio` para Codex Sol o Terra en esfuerzo medio y otros modelos medios. Usa `economico-capaz` para Sonnet, Kimi, GLM, DeepSeek Pro o Qwen Plus, y `economico` para modelos flash, haiku o mini. Los modelos «free» son `gratis`. Si desconoces tu modelo, usa el nivel más alto posible de tu agente según [tiers.json](../scripts/tiers.json).
+- **Tamaño (`--size`).** Usa `trivial` para una errata, un renombre o una edición mecánica. Usa `chica` para uno o dos archivos y un comportamiento. Usa `mediana` para tres a seis archivos o un módulo, con pruebas y documentación. Usa `grande` para varios módulos, más de unos seis archivos o un diseño nuevo.
+- **Partes (`--parts`).** Cuenta las partes independientes, de 1 a 50.
+- **Riesgo (`--risk`).** Usa `alto` si hay seguridad, datos de usuarios, dinero, concurrencia, migraciones, arquitectura o un cambio difícil de revertir.
+- **Disponibilidad (`--available`).** Incluye todos los niveles por defecto. Quita un nivel solo si falló su cuota en esta sesión o el usuario lo descartó. `discover.py` lista el inventario. Los fallos de cuota se detectan al usar un modelo.
+- **Salida 0.** Sigue `mode` y `roles`.
+- **Salida 1.** Explica qué nivel falta y propone esperar a que vuelva la cuota o aceptar otro nivel. Corre de nuevo el selector con lo que confirme el usuario.
+- **Salida 2.** Corrige los argumentos y repite.
+- **Si `ask_user` es `true`.** Pregunta antes de abrir la sesión de frontera. Si el usuario la rechaza, repite sin `frontera` en `--available`. Si sale 1, explica el bloqueo.
 
 ## Asignar
 

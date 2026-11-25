@@ -1,13 +1,13 @@
 ---
 name: ezorca
-description: Coordina tareas en Orca o las resuelve directo, según convenga. Antes de planear decide entre trabajar directo (el chat implementa y pide un QA barato en otra sesión si toca lógica) o coordinar un Run (la frontera planea y revisa; modelos económicos, gratis o locales escriben el código) según el tamaño, el paralelismo, el riesgo y las preferencias del usuario. Escala por evidencia, permite entrega normal o verificada y compara revisiones de skills.
+description: "Resuelve tareas en Orca con la opción más barata que cumpla: directo en el chat, delegado a un ejecutor con validador, o un Run coordinado con planificador de frontera, ejecutores y validadores. El chat puede ser cualquier modelo; elige modelo y esfuerzo por papel, escala por evidencia, permite entrega normal o verificada y compara revisiones de skills."
 ---
 
 # EzOrca
 
-Acepta «Usa EzOrca para <tarea>» y una modalidad opcional, «entrega normal» o «entrega verificada». Si el encargo va en modo coordinado, el chat coordina el Run como Elefante (PM). Razona la estrategia, lleva el proceso y el contexto, escribe los encargos, decide y acepta. Los Goldfish ejecutan el trabajo. Coordinar puede ahorrar tokens del modelo caro y también se justifica por riesgo o a pedido del usuario. Las preferencias explícitas del usuario sobre agentes, modelos, asignaciones o participaciones mandan sobre todo lo demás. [¿Coordinar o hacerlo directo?](#coordinar-o-hacerlo-directo)
+Acepta «Usa EzOrca para <tarea>» y una modalidad opcional, «entrega normal» o «entrega verificada». Si el encargo va en modo coordinado, el chat coordina el Run como Elefante (PM). Razona la estrategia, lleva el proceso y el contexto, escribe los encargos, decide y acepta. Los Goldfish ejecutan el trabajo. Coordinar puede ahorrar tokens del modelo caro y también se justifica por riesgo o a pedido del usuario. Las preferencias explícitas del usuario sobre agentes, modelos, asignaciones o participaciones mandan sobre todo lo demás. [Modo inteligente](#modo-inteligente-la-opción-más-barata-que-cumpla)
 
-**En un Run coordinado, la frontera no escribe código** (el usuario puede indicar otra cosa). El Elefante y toda sesión cara (Opus, Codex en esfuerzo alto u otro modelo de frontera) orquestan, planean, escriben encargos y revisan. Todo el código, incluidas las pruebas y las ediciones triviales, lo escriben Goldfish económicos, gratis o locales. Si algo es difícil, la frontera describe la solución con detalle (interfaz, casos, pasos, archivo y símbolo) y un modelo más barato la escribe.
+En modo delegado o coordinado, el nivel máximo del ejecutor es `medio`: si la tarea exige más capacidad, la frontera planifica y describe la solución, y un modelo medio la escribe.
 
 ## Con el usuario
 
@@ -17,19 +17,24 @@ Acepta «Usa EzOrca para <tarea>» y una modalidad opcional, «entrega normal» 
 - Pregunta solo lo que cambia el plan y no puedes averiguar, en una sola tanda corta y con una opción recomendada por pregunta. Durante el Run, pregunta solo por alcance, riesgo o costo según la [escalera de modelos](#escalera-de-modelos).
 - Todo lo que ve el usuario va en palabras simples: un término técnico o una sigla (p95, VAD, STT, TTS) solo con su explicación breve al lado. Informa el estado por tarea, el resultado y los pendientes, sin jerga de Orca innecesaria. Detalle en [equipo y modelos](references/team-and-models.md#con-el-usuario).
 
-## ¿Coordinar o hacerlo directo?
+## Modo inteligente: la opción más barata que cumpla
 
-Coordinar tiene un costo fijo: el Elefante lee el código, escribe encargos detallados y revisa lo que vuelve. Solo ahorra cuando el trabajo delegado es mucho mayor que ese costo. En el A/B justo, con el mismo modelo fuerte en el chat, coordinar una tarea chica y una mediana usó 2,8 y 1,6 veces los tokens de salida del modelo caro y tardó 1,8 y 2,8 veces más, respectivamente, sin una mejora concluyente de calidad. [A/B justo](docs/evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca)
+Coordinar tiene un costo fijo para el chat y, en el A/B justo con un modelo caro en el chat, usó 2,8 y 1,6 veces sus tokens de salida en las tareas chica y mediana, respectivamente, sin una mejora concluyente de calidad. [A/B justo](docs/evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca)
 
-Antes de planear, clasifica el encargo y dilo en una línea con el motivo:
+1. Antes de planear, reúne el contexto mínimo y estima el tamaño (`trivial`, `chica`, `mediana`, `grande`), las partes independientes y el riesgo. Consulta [cómo llenar el selector](references/team-and-models.md#modo-inteligente-cómo-llenar-el-selector).
+2. Corre `python <skill>/scripts/choose_mode.py --chat-tier <nivel del chat> --size … --parts … --risk …`. Agrega `--verified`, `--chat-no-code` o `--available` si aplican. La entrega verificada exige coordinar y siempre lleva dos pases de validador, incluso en tareas triviales.
+3. Si sale 0, sigue `mode` y `roles`. Dile al usuario en una línea el modo, el motivo y el costo estimado frente a las otras opciones. Si `ask_user` es `true`, pregunta antes de abrir la sesión de frontera. Usa la guía del selector si otro código de salida o la respuesta del usuario requieren repetir el cálculo.
+4. Si el alcance cambia durante el trabajo, vuelve a correr el selector y avisa.
 
-- **Directo** (lo predeterminado en tareas chicas y medianas: un área del código, pocos archivos, criterios claros, nada que valga la pena paralelizar). El modelo de este chat hace el cambio, corre las pruebas y, si el cambio toca lógica, pide un pase QA en una sesión nueva, de otra familia si hay una, con el modelo más barato capaz de revisar. Sin Run de Orca, sin `run.md` y sin `discover.py`.
-- **Coordinado**, si se cumple al menos una: (1) tres o más partes independientes que ganan con el paralelismo; (2) mucho trabajo mecánico y bien definido (muchos archivos, migraciones, pruebas en masa) que un modelo económico hace con un encargo corto; (3) riesgo alto (seguridad, datos, concurrencia, arquitectura) que pide verificación independiente; (4) el modelo de este chat no puede o no debe escribir código (cuota, política del usuario o capacidad); (5) el usuario pide coordinar, pide entrega verificada o dos pases ciegos, aunque sea chico.
-- Si dudas, es directo. Si a mitad de un trabajo directo aparece alcance nuevo que cumple una condición, pasa a coordinado y avísalo.
+- **Directo.** El chat implementa, corre las pruebas y, si hay validador, pide el pase en otra sesión.
+- **Delegado.** El chat asigna el trabajo según el modelo y el esfuerzo de `roles`. Si `roles` incluye un validador, encarga la revisión a otra familia si hay una o a una sesión nueva y ciega del mismo agente. Sin `run.md` ni tandas.
+- **Coordinado.** Sigue el Run completo de esta skill. Si hay planificador, el chat le pasa el pedido textual del usuario, recibe el plan y se lo propone al usuario antes de ejecutar. Los validadores revisan a los ejecutores y el chat decide con sus veredictos.
+
+El Elefante puede ser cualquier modelo. En modo delegado o coordinado no escribe código y, si es caro, solo razona.
 
 ## Elegir el flujo
 
-- **Directo.** Ver la sección anterior: el chat trabaja solo y, si toca lógica, pide un pase QA en otra sesión. Los pasos del Run (registro, encargos, tandas, integración y verificación) aplican solo a Runs coordinados; las pautas de «Con el usuario» valen siempre.
+- **Directo o delegado.** Según el modo inteligente. Los pasos del Run (registro, encargos, tandas, integración y verificación) aplican solo a Runs coordinados; las pautas de «Con el usuario» valen siempre.
 - **Arquitectura de agentes y modelos.** Si el usuario solo pide una propuesta, devuelve las fases, los papeles, la asignación sugerida con su nivel de costo y el motivo de cada elección. Presenta los IDs confirmados por el usuario o la instalación y marca los que habría que verificar antes de ejecutar.
 - **Revisión en paralelo.** Lanza un Goldfish por perspectiva que necesite contexto limpio, otro agente o su propio workspace, cada uno en una sesión nueva de solo lectura sobre la misma revisión. No delegues resúmenes de texto que ya tienes en contexto. Integra y deduplica los hallazgos.
 - **Entrega normal.** Es la predeterminada y la que se usa con «sin verificación». Coordina la ejecución y la integración y aplica las comprobaciones habituales; correr las pruebas no la convierte en verificada. Todo cambio no trivial lleva **un pase QA único** en una sesión distinta de la del implementador; tu lectura no lo sustituye. Si hubo hallazgos bloqueantes o mayores, el implementador los corrige y tú compruebas la corrección con su evidencia (pruebas y diff); otra sesión QA solo si la corrección cambia el diseño o toca archivos nuevos. Ninguna ronda extra por defecto. Un cambio trivial (una errata, una edición mecánica) no lleva QA.

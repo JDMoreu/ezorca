@@ -7,9 +7,9 @@ Usa EzOrca para <la tarea>
 Usa EzOrca para <la tarea>, entrega verificada
 ```
 
-EzOrca primero anuncia si hará el trabajo directamente o si conviene coordinarlo. Si pides entrega verificada o dos pases ciegos, coordina un Run aunque el encargo sea chico.
+EzOrca primero elige el modo directo, delegado o coordinado y anuncia el motivo y el costo estimado. Si pides entrega verificada o dos pases ciegos, coordina un Run aunque el encargo sea chico.
 
-- **Entrega normal** (predeterminada): el coordinador reparte, integra, corre las comprobaciones habituales y suma un pase de revisión independiente en una sesión distinta de la del implementador (el papel QA del ejemplo). Los cambios triviales no llevan revisión aparte.
+- **Entrega normal** (predeterminada). Incluye las comprobaciones habituales y un pase de revisión independiente en una sesión distinta de la del implementador (el papel QA del ejemplo). Los cambios triviales no llevan revisión aparte.
 - **Entrega verificada**: además, dos pases ciegos consecutivos sobre una versión con huella. Cuesta más sesiones y se reserva para cuando necesitas un veredicto independiente.
 
 No necesitas elegir agentes, modelos ni comandos: eso lo decide el coordinador entre lo que tenga instalado. Si tienes preferencias («usa solo Codex», «nada de modelos gratis», «que el diseño lo haga un modelo caro»), dilas en el encargo y mandan sobre todo lo demás.
@@ -26,17 +26,17 @@ En un Run coordinado, los modelos caros planifican, escriben encargos y revisan.
 
 > Usa EzOrca para agregar un flag `--desde` a la CLI `notas` que filtre las notas anteriores a una fecha.
 
-Encargo claro: resultado, alcance y criterio. EzOrca lo resuelve directo y lo avisa en una línea:
+Con un chat de frontera y cuota para todos los niveles, EzOrca lo resuelve directo y lo avisa en una línea:
 
-> «Lo hago directo: es un cambio en un solo script con criterios claros, y coordinarlo costaría más sin mejorar el resultado. Al terminar pido un QA barato en otra sesión.»
+> «Modo directo. Es una tarea chica y el chat puede hacerla. El costo estimado es 23 frente a 62 en modo delegado o coordinado.»
 
-Hace el cambio, corre las pruebas y, como toca lógica, pide un pase de revisión en otra sesión con un modelo económico. Costo: este chat y una sesión económica de QA.
+Hace el cambio, corre las pruebas y pide un pase de revisión en otra sesión con un modelo económico capaz.
 
 ### 2. Varias tareas independientes
 
 > Usa EzOrca para la API web `facturas`: (a) validar el RFC antes de guardar, (b) devolver 404 con JSON en vez de HTML, (c) agregar paginación a `GET /facturas`.
 
-Tres tareas que no comparten archivos: EzOrca lanza hasta cuatro Goldfish por tanda, cada uno en su worktree con sus archivos delimitados, y une los resultados con una puerta por cambio. Si dos tareas tocaran el mismo archivo, las serializa. Aquí el paralelismo es lo que ahorra tiempo.
+Con tres partes independientes, EzOrca elige un Run coordinado y pregunta antes de abrir la sesión del planificador de frontera. El chat le pasa el pedido textual y te propone el plan antes de ejecutar. Luego lanza hasta cuatro Goldfish por tanda y comprueba cada cambio al integrarlo.
 
 ### 3. Entrega verificada
 
@@ -54,7 +54,7 @@ Falta el criterio. EzOrca mide o lee primero (por ejemplo, que `GET /facturas` t
 
 > Usa EzOrca para ordenar los mensajes de error de la CLI `notas`. Solo tengo Codex.
 
-Codex resuelve el cambio directamente en el chat. Si el alcance crece y amerita coordinar, los papeles salen de los modelos y esfuerzos disponibles en Codex.
+Si es una tarea chica y el chat usa Codex en esfuerzo medio, Codex implementa el cambio directamente. EzOrca abre otra sesión de Codex como validador para un pase ciego.
 
 ## Qué verás
 
@@ -90,8 +90,8 @@ Pregunta antes solo si usaría un modelo de frontera o Codex en esfuerzo alto en
 
 ## Consejos de costo
 
-- **No coordines lo que el chat puede hacer directo.** Coordinar puede valer la pena si hay trabajo que gana con el paralelismo, mucho trabajo mecánico o un riesgo alto que exige revisión independiente. [Evaluación](evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca)
-- **En un Run coordinado, la frontera planifica y revisa.** Los modelos económicos escriben el código y las pruebas con encargos detallados, salvo que el usuario indique otra cosa. El plan prevé como máximo unas dos sesiones de frontera además de la que coordina.
+- **Compara el costo de los modos factibles.** El selector toma en cuenta la capacidad del chat, la de los modelos disponibles y las sesiones adicionales. [Evaluación](evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca)
+- **En un Run coordinado, la frontera planifica y revisa.** Los ejecutores escriben el código y las pruebas con encargos detallados. Su nivel máximo es medio. El plan prevé como máximo unas dos sesiones de frontera además de la que coordina.
 - **Tandas de unos cuatro por modelo.** Más workers simultáneos del mismo modelo chocan con el límite de concurrencia del proveedor. Si hay mucho trabajo, reparte entre modelos parecidos o espera la tanda siguiente.
 - **Las cuotas se agotan.** Cuando pasa, EzOrca cambia de agente o de nivel y lo dice en una línea. Si limitaste los agentes y no queda ninguno, te informa el bloqueo en vez de inventar una salida.
 - **Encargos claros son más baratos.** Un encargo con resultado esperado, criterio verificable y alcance evita rondas de preguntas y reintentos. Si el tuyo no los trae, la primera tanda de preguntas es la inversión más rentable.
