@@ -188,6 +188,79 @@ sesiones en `session` sino en `session_v2`, y solo medir contra registros reales
   costo se mide en tokens, y las lecturas de caché suelen cobrarse a una fracción
   del precio de entrada según cada proveedor.
 
+## A/B justo: sesiones nuevas con y sin EzOrca
+
+Ocho sesiones nuevas de Claude Code con Claude Opus, cada una en un worktree
+nuevo del mismo commit y con el mismo texto de tarea. La única diferencia entre
+brazos fue la frase inicial «Usa EzOrca para lo siguiente.». Ambos brazos
+tuvieron los mismos modelos permitidos: Opus para el chat y DeepSeek V4.1 Flash
+por OpenCode; el brazo sin EzOrca no usó DeepSeek y escribió el código con el
+propio Opus. Fueron 2 tareas × 2 brazos × 2 repeticiones. Los árbitros fueron
+pruebas ocultas escritas por un tercero solo a partir del texto de la tarea (7
+para T1 y 9 para T2) y un juez ciego por tarea, con las cuatro implementaciones
+en carpetas A–D en orden aleatorio. El costo se mide en tokens de los registros
+locales de cada intento; el tiempo, desde el lanzamiento hasta el último
+mensaje del chat.
+
+### Resultados
+
+T1 (tarea pequeña):
+
+| Intento | Pruebas ocultas | Juez ciego (/15) | Lugar | Minutos | Opus salida | Opus caché leída | DeepSeek (sesiones · salida) |
+|---|---|---|---|---|---|---|---|
+| sin EzOrca 1 | 7/7 | 10/15 | 2.º | 1,2 | 4 755 | 240 650 | 0 · — |
+| sin EzOrca 2 | 7/7 | 13/15 | 1.º | 2,2 | 6 434 | 408 456 | 0 · — |
+| con EzOrca 1 | 7/7 | 9/15 | 3.º | 3,1 | 16 166 | 1 618 254 | 2 · 11 804 |
+| con EzOrca 2 | 7/7 | 7/15 | 4.º | 3,1 | 14 892 | 1 979 853 | 2 · 7 407 |
+
+T2 (tarea mediana):
+
+| Intento | Pruebas ocultas | Suite del repo | Juez ciego (/25) | Lugar | Minutos | Opus salida | Opus caché leída | DeepSeek (sesiones · salida) |
+|---|---|---|---|---|---|---|---|---|
+| sin EzOrca 1 | 9/9 | 80 OK | 20/25 | 2.º | 2,8 | 16 862 | 1 304 654 | 0 · — |
+| sin EzOrca 2 | 9/9 | 80 OK | 16/25 | 4.º | 4,1 | 21 451 | 1 799 536 | 0 · — |
+| con EzOrca 1 | 9/9 | 85 OK | 22/25 | 1.º | 7,8 | 29 115 | 3 143 903 | 4 · 18 057 |
+| con EzOrca 2 | 9/9 | 90 OK | 17/25 | 3.º | 11,8 | 32 429 | 4 298 289 | 4 · 28 953 |
+
+Promedio del juez en T2: con EzOrca 19,5/25 y sin EzOrca 18,0/25, un empate
+dentro del ruido. Defecto común en T1: ninguna versión maneja bien el plural de
+etiquetas de varias palabras; en T2: `repo` o `worktree_name` hechos solo de
+espacios se aceptan como válidos.
+
+### Lectura
+
+- **Calidad.** En T1 el brazo sin EzOrca quedó 1.º y 2.º; en T2 los brazos se
+  alternan, con EzOrca 1.º y 3.º. Las ocho implementaciones pasaron las pruebas
+  ocultas. Con 2 repeticiones y un solo juez LLM por tarea, ninguna diferencia
+  de calidad es concluyente.
+- **Costo.** Salida de Opus: T1 ≈ 2,8× (15,5 k frente a 5,6 k de promedio) y T2
+  ≈ 1,6× (30,8 k frente a 19,2 k). Caché leída de Opus: ≈ 5,5× en T1 y ≈ 2,4× en
+  T2. Además, el brazo con EzOrca sumó DeepSeek: 2 sesiones por intento en T1 y
+  4 en T2.
+- **Tiempo.** Con EzOrca 1,8× en T1 (3,1 frente a 1,7 min) y 2,8× en T2 (9,8
+  frente a 3,5 min).
+- **Conclusión.** En estas dos tareas, la salida de Opus con EzOrca fue 2,8× en
+  la chica y 1,6× en la mediana; con solo dos tareas no se puede afirmar una
+  tendencia por tamaño. En ambas, un Opus que escribe el código directo consumió
+  menos tokens de Opus y tardó menos. Queda como hipótesis por probar que EzOrca
+  compense su costo en tareas grandes, de riesgo, o donde el QA independiente
+  encuentre defectos que el autor no ve.
+- **Contraste con el A/B anterior.** En el de `cost_report.py`, el brazo sin
+  EzOrca era Codex medio solo y el con EzOrca ganó en calidad (14/15 frente a
+  9/15) con más tokens, con un coordinador de chat largo. Aquí ambos brazos
+  tienen el mismo modelo fuerte y la ventaja de calidad no se repitió.
+
+### Límites de este A/B justo
+
+- **Dos repeticiones por brazo y tarea.** Es una señal, no una diferencia
+  demostrada.
+- **Un juez LLM por tarea.** Estaba previsto Kimi K3.1 Pro como juez, pero se
+  agotó la cuota de 5 h de OpenCode Go y se reasignó a Codex medio, de otra
+  familia que ambos brazos.
+- **Dólares no calculados.** El costo se mide en tokens; no se calcularon
+  dólares.
+- **Dos tareas de un solo repo.** No demuestran superioridad general.
+
 ## Límites honestos
 
 - **Una repetición en el cribado.** Es suficiente para descartar, no para
@@ -211,6 +284,8 @@ sesiones en `session` sino en `session_v2`, y solo medir contra registros reales
   se acaba de decidir; los ajustes quedaron documentados en el registro del Run
   y en los ids de la rúbrica.
 - **Un solo proyecto en el A/B.** Dos tareas no demuestran superioridad general.
+  El A/B justo usó 2 repeticiones por brazo y tarea y no mostró ventaja de
+  calidad con EzOrca.
 
 ## Costo del proceso
 
