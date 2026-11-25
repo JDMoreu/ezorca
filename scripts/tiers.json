@@ -1,6 +1,9 @@
-{"rules": [
-  {"pattern": "free", "tier": "gratis"},
-  {"pattern": "flash|mini|haiku|lite", "tier": "economico"},
-  {"pattern": "pro|plus|kimi|glm-5|sonnet", "tier": "economico-capaz"}
-], "default": "economico-capaz",
- "agents": {"claude": "frontera", "codex": "medio", "pi": "medio", "copilot": "medio"}}
+{
+  "price_output_per_million": [
+    {"tier": "gratis", "max": 0},
+    {"tier": "economico", "max": 0.6},
+    {"tier": "economico-capaz", "max": 2},
+    {"tier": "medio", "max": 12},
+    {"tier": "frontera", "max": null}
+  ]
+}

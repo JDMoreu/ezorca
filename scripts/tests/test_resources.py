@@ -60,6 +60,11 @@ class ResourcesTest(unittest.TestCase):
             code = resources.main(["--cache-dir", str(self.root), "--reserve", str(reserve), *(extra or [])])
         return code, out.getvalue(), err.getvalue()
 
+    def test_tier_depende_del_precio_no_del_nombre(self) -> None:
+        self.assertEqual(resources.tier(10), "medio")
+        self.assertEqual(resources.tier(0), "gratis")
+        self.assertEqual(resources.tier(.5), "economico")
+
     def test_presupuesto_y_niveles_del_ejemplo(self) -> None:
         responses = self.setup_sources()
         with mock.patch.object(resources, "run_cmd", side_effect=lambda args: responses.get(Path(args[0]).stem, (1, "", "no"))):

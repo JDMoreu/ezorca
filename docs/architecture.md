@@ -97,8 +97,9 @@ existan se saltan.
 
 1. **Descubrir.** Una vez por Run: agentes instalados, modelos disponibles y qué
    admite `worker-start`. El resultado se clasifica por escalón.
-2. **Plan por papel.** Una línea por papel: papel, agente y modelo, nivel de
-   costo y motivo. Cierra con las sesiones previstas por nivel.
+2. **Plan por papel.** Una línea por papel: papel, agente y modelo de `pick`, nivel
+   de costo y motivo. Elige el más barato del nivel pedido o superior; cierra con
+   las sesiones previstas por nivel.
 3. **Encargos validados.** Cada encargo en un archivo, con alcance cerrado,
    ejemplo y comprobaciones. Se validan antes de lanzar.
 4. **Tanda.** Los workers arrancan en paralelo, con tope por modelo y recibos

@@ -3,6 +3,13 @@
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y la
 versión, [SemVer](https://semver.org/lang/es/).
 
+## [1.4.0] – Sin publicar
+
+### Cambiado
+
+- El modo inteligente consulta presupuesto vivo antes de elegir y cubre los papeles con candidatos de `pick` ordenados por precio.
+- `resources.py` clasifica por precio de salida; `discover.py` conserva el inventario y deja sin nivel los modelos sin precio.
+
 ## [1.3.0] – 2026-11-25
 
 ### Agregado

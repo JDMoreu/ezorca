@@ -60,16 +60,6 @@ En Windows: `rmdir /s /q "%USERPROFILE%\.agents\skills\ezorca"`.
 
 ## Ajustar la clasificación de modelos
 
-`scripts/tiers.json` traduce los nombres de modelo de OpenCode a escalones de costo. Son patrones, no una lista fija de modelos, así que sigue sirviendo cuando aparecen modelos nuevos:
+`scripts/resources.py` traduce el precio de salida por millón a escalones usando los límites ordenados de `scripts/tiers.json`; el nombre no decide:
 
-```json
-{"rules": [{"pattern": "free", "tier": "gratis"},
-           {"pattern": "flash|mini|haiku|lite", "tier": "economico"},
-           {"pattern": "pro|plus|kimi|glm-5|sonnet", "tier": "economico-capaz"}],
- "default": "economico-capaz",
- "agents": {"claude": "frontera", "codex": "medio", "pi": "medio", "copilot": "medio"}}
-```
-
-`rules` se aplica en orden sobre el ID del modelo y gana la primera coincidencia; `default` es el escalón de lo que no coincide; `agents` fija el nivel de cada agente sin listado de modelos.
-
-Edítalo si tu proveedor nombra los modelos de otra forma. El coordinador igual decide con su propio criterio: la clasificación orienta, no manda.
+`discover.py` conserva el inventario, deja `tier: null` para precio desconocido y regenera cachés que usaban reglas por nombre. Esos modelos se muestran para diagnóstico, pero nunca se declaran elegibles.

@@ -75,7 +75,7 @@ class DiscoverTest(unittest.TestCase):
             }
         )
 
-    def test_clasifica_escalones_y_agentes(self) -> None:
+    def test_inventario_no_clasifica_por_nombre(self) -> None:
         with mock.patch.object(discover, "run_cmd", self.fake()):
             code, out, err = run_main([])
 
@@ -86,15 +86,38 @@ class DiscoverTest(unittest.TestCase):
         self.assertIn("generated_at", data)
 
         tiers = {item["model"]: (item["agent"], item["tier"]) for item in data["models"]}
-        self.assertEqual(tiers["opencode-go/hy4-flash-free"], ("opencode", "gratis"))
-        self.assertEqual(tiers["opencode-go/deepseek-v4.1-flash"], ("opencode", "economico"))
-        self.assertEqual(tiers["opencode-go/kimi-k3.1-pro"], ("opencode", "economico-capaz"))
+        self.assertEqual(tiers["opencode-go/hy4-flash-free"], ("opencode", None))
+        self.assertEqual(tiers["opencode-go/deepseek-v4.1-flash"], ("opencode", None))
+        self.assertEqual(tiers["opencode-go/kimi-k3.1-pro"], ("opencode", None))
         configured = {
             item["agent"]: item["tier"]
             for item in data["models"]
             if item["model"] == "configurado"
         }
-        self.assertEqual(configured, {"claude": "frontera", "codex": "medio"})
+        self.assertEqual(configured, {"claude": None, "codex": None})
+
+    def test_cache_vieja_con_niveles_por_nombre_se_regenera(self) -> None:
+        self.cache.write_text(json.dumps({"agents": ["opencode"], "models": [
+            {"agent": "opencode", "model": "kimi-flash", "tier": "economico-capaz"}]}), encoding="utf-8")
+        fake = self.fake()
+        with mock.patch.object(discover, "run_cmd", fake):
+            code, out, err = run_main(["--cache", str(self.cache)])
+        self.assertEqual((code, err), (0, ""))
+        self.assertEqual(json.loads(out)["models"][0]["tier"], None)
+        self.assertEqual(len(fake.calls), 2)
+
+    def test_cache_contenedor_o_elemento_invalido_se_regenera(self) -> None:
+        for value in ("[]", json.dumps({"models": [None]}), json.dumps({
+            "models": [{"agent": "codex", "model": "configurado", "tier": "medio"}]})):
+            with self.subTest(value=value):
+                self.cache.write_text(value, encoding="utf-8")
+                fake = self.fake()
+                with mock.patch.object(discover, "run_cmd", fake):
+                    code, out, err = run_main(["--cache", str(self.cache)])
+                self.assertEqual((code, err), (0, ""))
+                data = json.loads(out)
+                self.assertEqual(data["agents"], ["claude", "codex", "opencode"])
+                self.assertEqual(len(fake.calls), 2)
 
     def test_cache_fresca_no_ejecuta_comandos(self) -> None:
         first = self.fake()

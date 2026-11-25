@@ -16,7 +16,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-TIERS_PATH = Path(__file__).with_name("tiers.json")
 TIMEOUT_SECONDS = 120
 IS_WINDOWS = os.name == "nt"
 
@@ -58,22 +57,6 @@ def use_utf8_stdout() -> None:
         reconfigure(encoding="utf-8")
 
 
-def load_tiers(path: Path = TIERS_PATH) -> dict[str, Any]:
-    """Carga las reglas de escalones desde tiers.json."""
-    tiers = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(tiers.get("rules"), list) or "default" not in tiers:
-        raise ValueError(f"{path.name} no tiene reglas válidas")
-    return tiers
-
-
-def classify(model: str, tiers: dict[str, Any]) -> str:
-    """Devuelve el escalón del modelo; gana la primera regla que coincide."""
-    for rule in tiers["rules"]:
-        if re.search(rule["pattern"], model, re.IGNORECASE):
-            return str(rule["tier"])
-    return str(tiers["default"])
-
-
 def installed_agents() -> list[str]:
     """Devuelve los IDs de agentes instalados o lanza RuntimeError si Orca falla."""
     code, out, err = run_cmd([orca_command(), "agent", "installed", "--json"])
@@ -87,7 +70,7 @@ def installed_agents() -> list[str]:
         raise RuntimeError(f"respuesta inválida de orca: {exc}") from exc
 
 
-def collect(tiers: dict[str, Any]) -> dict[str, Any]:
+def collect() -> dict[str, Any]:
     """Construye el informe de agentes y modelos consultando Orca y OpenCode."""
     agents = installed_agents()
     opencode_agents = [agent for agent in agents if agent.startswith("opencode")]
@@ -106,11 +89,10 @@ def collect(tiers: dict[str, Any]) -> dict[str, Any]:
                         {
                             "agent": opencode_agents[0],
                             "model": model,
-                            "tier": classify(model, tiers),
+                            "tier": None,
                         }
                     )
 
-    configured = tiers.get("agents") or {}
     listed = opencode_agents[0] if opencode_agents else None
     for agent in agents:
         if agent == listed:
@@ -119,7 +101,7 @@ def collect(tiers: dict[str, Any]) -> dict[str, Any]:
             {
                 "agent": agent,
                 "model": "configurado",
-                "tier": str(configured.get(agent, tiers["default"])),
+                "tier": None,
             }
         )
 
@@ -146,6 +128,15 @@ def reject_json_constant(value: str) -> None:
     raise ValueError(f"Constante JSON no válida: {value}")
 
 
+def cache_has_current_contract(text: str) -> bool:
+    """Rechaza cachés que aún afirmaban niveles por nombre de modelo."""
+    data = json.loads(text, parse_constant=reject_json_constant)
+    if not isinstance(data, dict) or not isinstance(data.get("agents"), list): return False
+    models = data.get("models")
+    if not isinstance(models, list): return False
+    return all(isinstance(item, dict) and item.get("tier") is None for item in models)
+
+
 def main(argv: list[str] | None = None) -> int:
     """Punto de entrada: imprime el informe JSON y gestiona la caché."""
     use_utf8_stdout()
@@ -166,7 +157,8 @@ def main(argv: list[str] | None = None) -> int:
         fresh = args.cache and is_fresh(args.cache, args.max_age_hours)
         cached = args.cache.read_text(encoding="utf-8") if fresh else None
         if cached is not None:
-            json.loads(cached, parse_constant=reject_json_constant)
+            if not cache_has_current_contract(cached):
+                cached = None
     except (ValueError, RecursionError):  # Incluye JSONDecodeError y UnicodeDecodeError.
         cached = None
     except OSError as exc:
@@ -177,7 +169,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     try:
-        text = json.dumps(collect(load_tiers()), ensure_ascii=False, indent=2) + "\n"
+        text = json.dumps(collect(), ensure_ascii=False, indent=2) + "\n"
     except (RuntimeError, OSError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2

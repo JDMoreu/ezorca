@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any
 TIERS = ("gratis", "economico", "economico-capaz", "medio", "frontera")
 PLANS = ("claude", "codex", "opencodeGo")
+TIERS_PATH = Path(__file__).with_name("tiers.json")
+PRICE_LIMITS = json.loads(TIERS_PATH.read_text(encoding="utf-8"))["price_output_per_million"]
 class Parser(argparse.ArgumentParser):
     """Devuelve errores de argumentos al punto de entrada."""
     def error(self, message: str) -> None: raise ValueError(message)
@@ -77,7 +79,9 @@ def cost(data: dict, provider: str, model: str) -> tuple[float, float] | None:
     except (KeyError, TypeError, ValueError): return None
 def tier(out: float) -> str:
     """Clasifica por precio de salida en dólares por millón."""
-    return "gratis" if out == 0 else "economico" if out <= .6 else "economico-capaz" if out <= 2 else "medio" if out <= 12 else "frontera"
+    for rule in PRICE_LIMITS:
+        if rule["max"] is None or out <= float(rule["max"]): return str(rule["tier"])
+    raise ValueError(f"precio de salida fuera de tiers: {out}")
 def latest_claude(data: dict) -> list[str]:
     """Elige la última versión numérica encontrada por familia."""
     ids = data.get("anthropic", {}).get("models", {}); found = []

@@ -54,17 +54,17 @@ Lanza un Goldfish por perspectiva que necesite contexto limpio, otro agente o su
 
 1. Una vez por Run, consulta `orca agent installed --json` para conocer los agentes y sus IDs.
 2. Si OpenCode está instalado, consulta `opencode models` (lista en vivo, formato `proveedor/modelo`). Para los agentes sin comando de listado, usa su modelo configurado.
-3. Clasifica cada opción como **económica**, **media** o **cara** según tu conocimiento actual de su capacidad y su costo, y ubícala en un escalón de la [escalera](#escalera-de-modelos). Las señales del nombre (flash, mini, lite, haiku, free frente a pro, opus o esfuerzo alto) orientan, pero no deciden. Si dudas, clasifícala como media y dilo en el plan.
+3. Corre `resources.py` antes del selector. Solo su precio de salida conocido ubica una opción en la [escalera](#escalera-de-modelos); el nombre nunca sustituye el precio. `discover.py` es inventario y deja sin nivel los modelos no tasados.
 4. Si quieres, guarda la clasificación en una caché local regenerable, por ejemplo `<temp>/ezorca/models.json`, con la fecha y la fuente de cada entrada. Regénerala si tiene más de un día, si un arranque falla por un modelo no disponible o si cambian los agentes instalados. El usuario nunca mantiene esta lista.
 5. Consulta `orca orchestration worker-start --help` una vez por Run. Ahí se indica qué agentes aceptan `--model` y `--effort`. Para OpenCode, el modelo exige un worktree existente y no admite esfuerzo; con una sola tarea de edición, ese worktree es el workspace actual, no uno hijo nuevo; con varias tareas independientes, cada una usa su propio worktree.
 
 ## Modo inteligente: cómo llenar el selector
 
-- **Nivel del chat (`--chat-tier`).** Clasifica tu modelo activo. Usa `frontera` para Opus, GPT Astra o Codex en esfuerzo alto. Usa `medio` para Codex Sol o Terra en esfuerzo medio y otros modelos medios. Usa `economico-capaz` para Sonnet, Kimi, GLM, DeepSeek Pro o Qwen Plus, y `economico` para modelos flash, haiku o mini. Los modelos «free» son `gratis`. Si desconoces tu modelo, usa el nivel más alto posible de tu agente según [tiers.json](../scripts/tiers.json).
+- **Nivel del chat (`--chat-tier`).** Usa el nivel sustentado por el precio conocido de `resources.py`; si no aparece, usa provisionalmente el nivel más alto razonable solo para estimar el modo, dilo y no declares elegible ningún worker hasta confirmar el precio en `pick` o `--full`.
 - **Tamaño (`--size`).** Usa `trivial` para una errata, un renombre o una edición mecánica. Usa `chica` para uno o dos archivos y un comportamiento. Usa `mediana` para tres a seis archivos o un módulo, con pruebas y documentación. Usa `grande` para varios módulos, más de unos seis archivos o un diseño nuevo.
 - **Partes (`--parts`).** Cuenta las partes independientes, de 1 a 50.
 - **Riesgo (`--risk`).** Usa `alto` si hay seguridad, datos de usuarios, dinero, concurrencia, migraciones, arquitectura o un cambio difícil de revertir.
-- **Disponibilidad (`--available`).** Incluye todos los niveles por defecto. Quita un nivel solo si falló su cuota en esta sesión o el usuario lo descartó. `discover.py` lista el inventario. Los fallos de cuota se detectan al usar un modelo.
+- **Disponibilidad (`--available`).** Pasa el CSV completo de `resources.py`; quita niveles solo por cuota agotada en esta sesión o descarte explícito. Para cada papel, elige el candidato más barato de `pick` en el nivel pedido o superior; costo desconocido nunca es elegible.
 - **Salida 0.** Sigue `mode` y `roles`.
 - **Salida 1.** Explica qué nivel falta y propone esperar a que vuelva la cuota o aceptar otro nivel. Corre de nuevo el selector con lo que confirme el usuario.
 - **Salida 2.** Corrige los argumentos y repite.

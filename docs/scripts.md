@@ -4,14 +4,14 @@
 
 ## discover.py
 
-Lista los agentes instalados y clasifica los modelos de OpenCode por escalón con `tiers.json`. Entrada: el entorno. Paso del Run: **descubrir**, una vez por Run.
+Lista los agentes instalados y el inventario de OpenCode. Deja `tier: null` para modelos sin precio; `resources.py` es la autoridad. Paso del Run: **descubrir**, una vez por Run.
 
 ```bash
 python <skill>/scripts/discover.py --cache <carpeta del Run>/roster.json
 ```
 
 ```json
-{"generated_at": "...", "agents": ["claude", "codex", "opencode"], "models": [{"agent": "opencode", "model": "opencode-go/deepseek-v4.1-flash", "tier": "economico"}, {"agent": "codex", "model": "configurado", "tier": "medio"}]}
+{"generated_at": "...", "agents": ["claude", "codex", "opencode"], "models": [{"agent": "opencode", "model": "opencode-go/modelo", "tier": null}, {"agent": "codex", "model": "configurado", "tier": "medio"}]}
 ```
 
 `warnings` aparece si un comando falló sin impedir el informe. Opciones: `--cache RUTA` (si está fresca y contiene JSON válido, no ejecuta comandos), `--max-age-hours HORAS` (12). En Windows, una ruta estilo Git Bash como `/c/Users/x/roster.json` se interpreta como `C:/Users/x/roster.json`, al leer y al escribir la caché. Si la caché contiene JSON inválido, se regenera, y si hay un error de lectura, sale con exit 2 y el mensaje `error: no se pudo leer la caché en <ruta>: <detalle>` en stderr. Si la caché no se puede escribir, sale con exit 2 y el mensaje `error: no se pudo escribir la caché en <ruta>: <detalle>` en stderr. El informe se emite con exit 0. Si no se pudo leer el entorno, sale con exit 2.
@@ -219,18 +219,9 @@ Opciones: `--claude-dir DIR`, `--codex-dir DIR`, `--opencode-db FILE` (por omisi
 
 ## tiers.json
 
-Reglas de `discover.py`: gana la primera que coincide (regex, sin distinguir mayúsculas) y, si ninguna, `default`.
+`resources.py` consume `price_output_per_million` como única clasificación: compara el precio de salida por millón con límites ordenados. `discover.py` deja `tier: null` para modelos cuyo precio aún no se consultó y regenera cachés antiguas con niveles por nombre. Los modelos sin precio no son elegibles.
 
-```json
-{"rules": [
-  {"pattern": "free", "tier": "gratis"},
-  {"pattern": "flash|mini|haiku|lite", "tier": "economico"},
-  {"pattern": "pro|plus|kimi|glm-5|sonnet", "tier": "economico-capaz"}
-], "default": "economico-capaz",
- "agents": {"claude": "frontera", "codex": "medio", "pi": "medio", "copilot": "medio"}}
-```
-
-Escalones: `gratis`, `economico`, `economico-capaz`, `medio` y `frontera`. `agents` fija el escalón de los agentes sin listado, que salen con `model: "configurado"`. Las señales del nombre orientan, no deciden: si dudas, clasifica como `medio` y dilo en el plan.
+Los límites están en `price_output_per_million`; los escalones son `gratis`, `economico`, `economico-capaz`, `medio` y `frontera`. `agents` fija solo el nivel declarado del agente sin listado, que sale con `model: "configurado"`.
 
 ## Pruebas
 
