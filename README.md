@@ -47,8 +47,11 @@ Si el encargo amerita coordinar, el chat elige los agentes, modelos y papeles, r
 - En 9 simulacros con 45 criterios fijos, la versión candidata medida obtuvo 39/45 frente a 21–23/45 de la versión anterior, con 1 repetición y jueces LLM ciegos. La versión publicada incluye ediciones posteriores (correcciones de texto, scripts y papeles adaptativos) que no se volvieron a medir completas; método y límites en [docs/evaluation.md](docs/evaluation.md).
 - En dos tareas reales de un proyecto Rust privado, el equipo económico igualó y superó la solución de referencia según una revisión ciega; ninguna sesión de frontera escribió código.
 - En el A/B justo (2 tareas × 2 brazos × 2 repeticiones, con el mismo modelo fuerte en el chat), coordinar las tareas chica y mediana usó 2,8 y 1,6 veces los tokens de salida del modelo caro y tardó 1,8 y 2,8 veces más, respectivamente, sin una mejora concluyente de calidad. [Evaluación](docs/evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca)
+- En la prueba del modo inteligente (una tarea mediana, 2 repeticiones por brazo), los chats de menor nivel obtuvieron 17–22/25, una calidad comparable a Opus, usaron 0 tokens de Opus y fueron más lentos. [Evaluación](docs/evaluation.md#prueba-del-modo-inteligente-chat-de-menor-nivel)
 
 ![A/B real: calidad y tokens](docs/img/ab-results.svg)
+
+![Modo inteligente: calidad y tokens](docs/img/smart-mode.svg)
 
 En un A/B real, implementar `scripts/cost_report.py` con el mismo contrato para ambos lados: con EzOrca el juez ciego dio 14/15 casos límite y 0 bloqueantes; sin EzOrca, 9/15 y 1 bloqueante. Sin EzOrca fue más barato y rápido en esa tarea chica; EzOrca gastó más tokens y entregó más calidad. Detalle y límites en [docs/evaluation.md](docs/evaluation.md).
 
@@ -76,7 +79,7 @@ MIT. Ver [LICENSE](LICENSE).
 
 ## English summary
 
-EzOrca is an Orca skill that first decides whether the chat should do the work directly or coordinate a team of coding agents. Small and medium tasks default to direct work because coordination used more frontier-model output tokens without a conclusive improvement in quality in the fair A/B test. [Evaluation](docs/evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca)
+EzOrca is an Orca skill that first decides whether the chat should do the work directly or coordinate a team of coding agents. Small and medium tasks default to direct work because coordination used more frontier-model output tokens without a conclusive improvement in quality in the fair A/B test. [Evaluation](docs/evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca) In a single medium task with 2 repetitions per arm, lower-tier chats using smart mode scored 17–22/25, comparable to Opus, used 0 Opus tokens, and were slower.
 
 - Picks roles by risk and cost, and escalates by evidence instead of impatience.
 - Supports normal and verified delivery in coordinated runs. The frontier model plans and reviews, while cheaper models write the code and tests unless the user asks otherwise.

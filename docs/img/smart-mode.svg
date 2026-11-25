@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="720" viewBox="0 0 1120 720" role="img" aria-labelledby="smart-title smart-desc">
+  <title id="smart-title">Modo inteligente: calidad y tokens</title>
+  <desc id="smart-desc">Calidad del juez ciego (/25), en orden: Opus directo 1: 19; Opus directo 2: 17; Opus + EzOrca 1.2, 1: 18; Opus + EzOrca 1.2, 2: 20; Sonnet directo 1: 19; Sonnet directo 2: 22; DeepSeek delegado 1: 17; DeepSeek delegado 2: 19. Escala lineal 0–25; las cuatro barras de Sonnet y DeepSeek corresponden al modo inteligente. La evaluación nueva difirió hasta 4 puntos de la anterior. Tokens de salida, promedios por brazo en miles: Opus directo, frontera (Opus) 19,2; Opus + EzOrca 1.2, frontera 30,8 y económico (DeepSeek) 23,5; Sonnet directo, económico capaz 30,8 (Sonnet 24,5 + Kimi 6,3) y económico 0,6; DeepSeek delegado, económico 10,5 y económico capaz (Kimi) 14,9. Económico capaz agrupa Sonnet y Kimi; económico, DeepSeek. Los cuatro brazos de tokens usan la misma escala lineal de 0 a 60 mil. 0 tokens de Opus en el modo inteligente. Tarea mediana, 2 repeticiones por brazo, 25-nov-2026. Tokens, no dólares.</desc>
+  <style>
+    :root {
+      --bg: #F4F6F8; --surface: #FFFFFF; --ink: #14213A; --muted: #5B6B82;
+      --line: #D5DCE5; --accent: #1F6F8B; --accent-2: #C7861A;
+      --good: #2E7D4F; --bad: #B23A3A; color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0E1420; --surface: #151E2D; --ink: #E6ECF2; --muted: #9AA8BB;
+        --line: #2A3547; --accent: #5DB3CF; --accent-2: #E0A445;
+        --good: #5FBF86; --bad: #E07A7A; color-scheme: dark;
+      }
+    }
+    text { font-family: Inter, Segoe UI, Arial, sans-serif; font-variant-numeric: tabular-nums; }
+    .title { font-size: 23px; font-weight: 600; }
+    .panel-title { font-size: 17px; font-weight: 600; }
+    .label { font-size: 13px; }
+    .small { font-size: 12px; }
+    .num { font-variant-numeric: tabular-nums; }
+  </style>
+  <rect x="0" y="0" width="1120" height="720" fill="var(--bg)"/>
+  <text class="title" x="32" y="42" fill="var(--ink)">Modo inteligente: calidad y tokens</text>
+
+  <rect x="32" y="96" width="500" height="560" fill="var(--surface)" stroke="var(--line)"/>
+  <rect x="552" y="96" width="536" height="560" fill="var(--surface)" stroke="var(--line)"/>
+
+  <text class="panel-title" x="56" y="132" fill="var(--ink)">Calidad del juez ciego (/25)</text>
+  <text class="small" x="56" y="155" fill="var(--muted)">Escala lineal 0–25 · modo inteligente en verde</text>
+
+  <text class="label" x="56" y="190" fill="var(--ink)">Opus directo</text>
+  <text class="small num" x="80" y="218" text-anchor="end" fill="var(--muted)">1</text>
+  <rect x="100" y="202" width="243.2" height="22" fill="var(--muted)"/>
+  <text class="label num" x="351.2" y="218" fill="var(--ink)">19</text>
+  <text class="small num" x="80" y="250" text-anchor="end" fill="var(--muted)">2</text>
+  <rect x="100" y="234" width="217.6" height="22" fill="var(--muted)"/>
+  <text class="label num" x="325.6" y="250" fill="var(--ink)">17</text>
+
+  <text class="label" x="56" y="278" fill="var(--ink)">Opus + EzOrca 1.2</text>
+  <text class="small num" x="80" y="306" text-anchor="end" fill="var(--muted)">1</text>
+  <rect x="100" y="290" width="230.4" height="22" fill="var(--muted)"/>
+  <text class="label num" x="338.4" y="306" fill="var(--ink)">18</text>
+  <text class="small num" x="80" y="338" text-anchor="end" fill="var(--muted)">2</text>
+  <rect x="100" y="322" width="256" height="22" fill="var(--muted)"/>
+  <text class="label num" x="364" y="338" fill="var(--ink)">20</text>
+
+  <text class="label" x="56" y="366" fill="var(--ink)">Sonnet directo</text>
+  <text class="small num" x="80" y="394" text-anchor="end" fill="var(--good)">1</text>
+  <rect x="100" y="378" width="243.2" height="22" fill="var(--good)"/>
+  <text class="label num" x="351.2" y="394" fill="var(--ink)">19</text>
+  <text class="small num" x="80" y="426" text-anchor="end" fill="var(--good)">2</text>
+  <rect x="100" y="410" width="281.6" height="22" fill="var(--good)"/>
+  <text class="label num" x="389.6" y="426" fill="var(--ink)">22</text>
+
+  <text class="label" x="56" y="454" fill="var(--ink)">DeepSeek delegado</text>
+  <text class="small num" x="80" y="482" text-anchor="end" fill="var(--good)">1</text>
+  <rect x="100" y="466" width="217.6" height="22" fill="var(--good)"/>
+  <text class="label num" x="325.6" y="482" fill="var(--ink)">17</text>
+  <text class="small num" x="80" y="514" text-anchor="end" fill="var(--good)">2</text>
+  <rect x="100" y="498" width="243.2" height="22" fill="var(--good)"/>
+  <text class="label num" x="351.2" y="514" fill="var(--ink)">19</text>
+
+  <line x1="100" y1="544" x2="420" y2="544" stroke="var(--line)" fill="none"/>
+  <text class="small num" x="100" y="566" fill="var(--muted)">0</text>
+  <text class="small num" x="420" y="566" text-anchor="end" fill="var(--muted)">25</text>
+  <text class="small" x="56" y="606" fill="var(--muted)">La evaluación nueva difirió hasta 4 puntos de la anterior</text>
+
+  <text class="panel-title" x="576" y="132" fill="var(--ink)">Tokens de salida por nivel (promedio por brazo, miles)</text>
+  <rect x="576" y="174" width="12" height="12" fill="var(--accent-2)"/>
+  <text class="small" x="594" y="185" fill="var(--ink)">frontera · Opus</text>
+  <rect x="704" y="174" width="12" height="12" fill="var(--muted)"/>
+  <text class="small" x="722" y="185" fill="var(--ink)">económico capaz</text>
+  <rect x="850" y="174" width="12" height="12" fill="var(--accent)"/>
+  <text class="small" x="868" y="185" fill="var(--ink)">económico</text>
+  <text class="small" x="576" y="210" fill="var(--muted)">Económico capaz = Sonnet y Kimi · económico = DeepSeek</text>
+  <text class="small" x="576" y="235" fill="var(--muted)">Misma escala lineal desde 0 en los cuatro brazos</text>
+
+  <text class="label" x="576" y="272" fill="var(--ink)">Opus directo</text>
+  <rect x="770" y="252" width="86.4" height="30" fill="var(--accent-2)"/>
+  <text class="small num" x="813.2" y="272" text-anchor="middle" fill="#14213A">19,2</text>
+
+  <text class="label" x="576" y="342" fill="var(--ink)">Opus + EzOrca 1.2</text>
+  <rect x="770" y="322" width="138.6" height="30" fill="var(--accent-2)"/>
+  <rect x="908.6" y="322" width="105.75" height="30" fill="var(--accent)"/>
+  <text class="small num" x="839.3" y="342" text-anchor="middle" fill="#14213A">30,8</text>
+  <text class="small num" x="961.48" y="342" text-anchor="middle" fill="var(--surface)">23,5</text>
+
+  <text class="label" x="576" y="412" fill="var(--ink)">Sonnet directo</text>
+  <rect x="770" y="392" width="138.6" height="30" fill="var(--muted)"/>
+  <rect x="908.6" y="392" width="2.7" height="30" fill="var(--accent)"/>
+  <text class="small num" x="839.3" y="412" text-anchor="middle" fill="var(--surface)">30,8</text>
+  <text class="small num" x="920" y="412" fill="var(--accent)">0,6</text>
+  <text class="small num" x="576" y="440" fill="var(--muted)">Económico capaz = Sonnet 24,5 + Kimi 6,3</text>
+
+  <text class="label" x="576" y="482" fill="var(--ink)">DeepSeek delegado</text>
+  <rect x="770" y="462" width="67.05" height="30" fill="var(--muted)"/>
+  <rect x="837.05" y="462" width="47.25" height="30" fill="var(--accent)"/>
+  <text class="small num" x="803.53" y="482" text-anchor="middle" fill="var(--surface)">14,9</text>
+  <text class="small num" x="860.68" y="482" text-anchor="middle" fill="var(--surface)">10,5</text>
+
+  <line x1="770" y1="530" x2="1040" y2="530" stroke="var(--line)" fill="none"/>
+  <text class="small num" x="770" y="552" fill="var(--muted)">0</text>
+  <text class="small num" x="1040" y="552" text-anchor="end" fill="var(--muted)">60</text>
+  <text class="small" x="576" y="594" fill="var(--good)">0 tokens de Opus en el modo inteligente</text>
+
+  <text class="small" x="32" y="694" fill="var(--muted)">Tarea mediana, 2 repeticiones por brazo, 25-nov-2026. Tokens, no dólares.</text>
+</svg>

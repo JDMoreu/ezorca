@@ -3,13 +3,18 @@
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y la
 versión, [SemVer](https://semver.org/lang/es/).
 
-## [Sin publicar]
+## [1.3.0] – 2026-11-25
 
 ### Agregado
 
 - `choose_mode.py` elige el modo inteligente de menor costo que cumple los requisitos: directo, delegado o coordinado.
 - Cualquier modelo puede ser el Elefante.
 - Las tareas complejas pueden incorporar un planificador de frontera en una sesión nueva.
+- Prueba real del modo inteligente con chats de menor nivel en `docs/evaluation.md`, con su gráfico de calidad y tokens.
+
+### Corregido
+
+- Los ejemplos de nivel del chat ahora están en `SKILL.md`.
 
 ## [1.2.0] – 2026-11-25
 

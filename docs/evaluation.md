@@ -261,6 +261,98 @@ espacios se aceptan como válidos.
   dólares.
 - **Dos tareas de un solo repo.** No demuestran superioridad general.
 
+## Prueba del modo inteligente: chat de menor nivel
+
+### Diseño
+
+Se repitió la tarea mediana (T2) del A/B justo desde el mismo commit de partida:
+`launch_wave.py` admite `new-top-level` con `repo` y `worktree_name`;
+`discover.py --cache` interpreta rutas de Git Bash en Windows y sale con exit 2
+si no puede escribir; pruebas y documentación. La skill EzOrca usó el modo
+inteligente (`scripts/choose_mode.py`): antes de planear, el chat estimó tamaño,
+partes y riesgo, y el selector eligió la opción más barata que cumplía. Hubo
+sesiones nuevas con el mismo texto «Usa EzOrca para lo siguiente.», 2 brazos × 2
+repeticiones (25-nov-2026): Sonnet en Claude Code pudo usar Sonnet, DeepSeek
+V4.1 Flash y Kimi K3.1 Pro por OpenCode; DeepSeek en OpenCode pudo usar DeepSeek
+V4.1 Flash y Kimi K3.1 Pro. Se comparó con los 4 intentos de T2 del A/B justo:
+Opus directo (sin EzOrca) y Opus con EzOrca 1.2 (coordinado). Los árbitros
+fueron las mismas 9 pruebas ocultas y un juez ciego nuevo (Codex en esfuerzo
+medio, sesión nueva), que puntuó juntas las 8 versiones en carpetas A–H en orden
+aleatorio, con 5 criterios y máximo 25. El costo se midió en tokens de los
+registros locales de Claude Code y OpenCode; el tiempo va del lanzamiento al
+último mensaje. No se calcularon dólares.
+
+### Modo que eligió cada chat
+
+- **Sonnet 1:** directo; declaró su nivel como «medio» en vez de «económico
+  capaz», pero el modo salió igual.
+- **Sonnet 2:** directo; selector: 11 frente a 24,8 delegando y 25,8
+  coordinando; validó Kimi.
+- **DeepSeek 1:** delegado a Kimi (ejecutor) con QA de Kimi.
+- **DeepSeek 2:** delegado a Kimi (ejecutor) con QA de DeepSeek en otra sesión.
+
+Los 4 eligieron el modo que predecía el diseño.
+
+### Resultados
+
+| Versión | Modo | Pruebas ocultas | Suite | Juez (/25) | Lugar | Minutos | Salida del chat | Caché leída del chat | Otros modelos (sesiones · salida) |
+|---|---|---|---|---|---|---|---|---|---|
+| Opus directo 1 | — | 9/9 | 80 | 19 | 3.º–5.º | 2,8 | Opus 16 862 | 1 304 654 | — |
+| Opus directo 2 | — | 9/9 | 80 | 17 | 7.º–8.º | 4,1 | Opus 21 451 | 1 799 536 | — |
+| Opus + EzOrca 1.2, 1 | coordinado | 9/9 | 85 | 18 | 6.º | 7,8 | Opus 29 115 | 3 143 903 | DeepSeek 4 · 18 057 |
+| Opus + EzOrca 1.2, 2 | coordinado | 9/9 | 90 | 20 | 2.º | 11,8 | Opus 32 429 | 4 298 289 | DeepSeek 4 · 28 953 |
+| Sonnet 1 | directo | 9/9 | 86 | 19 | 3.º–5.º | 39,2 | Sonnet 26 962 | 3 026 880 | Kimi 4 · 3 321; DeepSeek 1 · 1 188 |
+| Sonnet 2 | directo | 9/9 | 86 | 22 | 1.º | 7,9 | Sonnet 21 987 | 2 619 224 | Kimi 1 · 9 306 |
+| DeepSeek 1 | delegado | 9/9 | 83 | 17 | 7.º–8.º | 16,8 | DeepSeek 11 836 | 3 398 144 | Kimi 2 · 22 502 |
+| DeepSeek 2 | delegado | 9/9 | 79 | 19 | 3.º–5.º | 7,6 | DeepSeek 9 133 (2 sesiones) | 1 136 512 | Kimi 1 · 7 297 |
+
+Promedio del juez: Sonnet directo 20,5; Opus + EzOrca 1.2 19,0; Opus directo
+18,0; DeepSeek delegado 18,0.
+
+Tokens de Opus: 0 en los 4 intentos del modo inteligente (frente a 19 157 de
+salida promedio en Opus directo y 30 772 en Opus + EzOrca 1.2). Los intentos con
+DeepSeek no usaron ningún modelo de Claude.
+
+![Modo inteligente: calidad y tokens](img/smart-mode.svg)
+
+### Ruido
+
+- La evaluación nueva difirió hasta 4 puntos de la anterior en las mismas cuatro
+  versiones. Con dos repeticiones por brazo, las diferencias pequeñas de puntaje
+  no permiten ordenar los brazos con confianza.
+- Puntajes anterior y nuevo: Opus + EzOrca 1.2, 1, de 22 a 18; Opus + EzOrca
+  1.2, 2, de 17 a 20; Opus directo 1, de 20 a 19; Opus directo 2, de 16 a 17.
+  La evaluación nueva usó un solo juez LLM.
+
+### Incidentes
+
+- Sonnet 1 tardó 39,2 min: su QA con Kimi falló varias veces (sesiones que se
+  cortaron casi sin salida) hasta que lo hizo DeepSeek. Sin ese incidente,
+  Sonnet 2 tardó 7,9 min.
+- Sonnet 1 declaró mal su nivel («medio»); la guía estaba en un archivo de
+  referencia aparte. Corrección: poner los ejemplos de nivel en `SKILL.md`.
+
+### Lectura
+
+- **Calidad.** En la tarea mediana, el modo inteligente obtuvo una calidad
+  comparable. Las 8 versiones pasan las pruebas ocultas y el juez las ubicó
+  entre 17 y 22. Sonnet directo obtuvo el mayor puntaje observado (22).
+- **Tokens de salida.** La salida media del chat Sonnet fue de 24 474,5 tokens
+  frente a 19 156,5 de Opus directo (+27,8 %). Al sumar la salida auxiliar de
+  Kimi y DeepSeek, el brazo Sonnet promedió 31 382 tokens (+63,8 %). La salida
+  del brazo Sonnet procede de modelos de menor nivel que Opus. La comparación
+  mide tokens de salida y no estima dólares. El modo inteligente usó cero
+  tokens de Opus. DeepSeek delegado repartió el trabajo entre DeepSeek y Kimi.
+- **Tiempo.** El modo inteligente fue más lento que Opus directo (7,6 a 16,8 min,
+  y 39,2 con el incidente, frente a 3,5 min de promedio).
+- **Selector.** Eligió en los 4 casos el modo previsto: directo con un chat capaz
+  (Sonnet) y delegado con un chat económico (DeepSeek).
+- **Conclusión.** Para esta tarea mediana, un chat de menor nivel con el modo
+  inteligente obtuvo calidad comparable a Opus, usó cero tokens de Opus y
+  tardó más.
+  Sigue pendiente medir tareas grandes o de riesgo, donde el modo pediría un
+  planificador de frontera.
+
 ## Límites honestos
 
 - **Una repetición en el cribado.** Es suficiente para descartar, no para
@@ -285,7 +377,8 @@ espacios se aceptan como válidos.
   y en los ids de la rúbrica.
 - **Un solo proyecto en el A/B.** Dos tareas no demuestran superioridad general.
   El A/B justo usó 2 repeticiones por brazo y tarea y no mostró ventaja de
-  calidad con EzOrca.
+  calidad con EzOrca. La prueba del modo inteligente usó la misma tarea mediana
+  y queda pendiente medir tareas grandes o de riesgo.
 
 ## Costo del proceso
 
