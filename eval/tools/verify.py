@@ -173,11 +173,11 @@ def spec(data: dict, case: dict) -> None:
     args = script_argv(data["argv"], "check_spec.py")
     if sorted(args) not in (sorted(("--kind", "implementacion", "spec.md")), ["spec.md"]): raise AssertionError("llamada a check_spec.py invalida")
     files = files_in(data, {"spec.md"}); text = str(files["spec.md"]); flat = folded(text)
-    if "reservas sinteticas" not in flat or "eval/tools/fixtures.py" not in flat: raise AssertionError("el encargo no contiene el contenido especÃ­fico del caso")
+    if "reserva" not in flat or not re.search(r"(?:dos|2) exclusiones.{0,80}sintetic", flat) or "eval/tools/fixtures.py" not in flat: raise AssertionError("el encargo no contiene el contenido especÃ­fico del caso")
     compact = "topes 80/95/90" in flat
-    associations = (re.search(r"95.{0,80}(5h|5 horas)", flat) and re.search(r"90.{0,80}(week|seman)", flat)) or (re.search(r"(5h|5 horas).{0,80}95", flat) and re.search(r"(week|seman).{0,80}90", flat))
-    if not compact and (not re.search(r"(general|base).{0,40}80", flat) or not associations): raise AssertionError("faltan topes 80/95/90 con sus ventanas")
-    required = (("sin red", "sin acceso a la red"), ("orcÃ¡ real", "orca real"), ("datos de cuenta",), ("puede editar",), ("ejemplo",), ("comprobaciones",), ("worker_done",))
+    associations = re.search(r"95.{0,80}5\s*h(?:oras)?|5\s*h(?:oras)?.{0,80}95", flat) and re.search(r"90.{0,80}(week|seman)|(week|seman).{0,80}90", flat)
+    if not compact and (not re.search(r"(general|base).{0,40}80|80.{0,40}(general|base)", flat) or not associations): raise AssertionError("faltan topes 80/95/90 con sus ventanas")
+    required = (("sin red", "sin acceso a la red", "no accedas a la red"), ("orcÃ¡ real", "orca real"), ("datos de cuenta",), ("puede editar",), ("ejemplo",), ("comprobaciones",), ("worker_done",))
     if any(not any(p in flat for p in group) for group in required): raise AssertionError("faltan restricciones, alcance, ejemplo, comprobaciones o cierre")
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "spec.md"; path.write_text(text, encoding="utf-8"); sink = io.StringIO()

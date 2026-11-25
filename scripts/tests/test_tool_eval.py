@@ -101,9 +101,21 @@ class ToolEvalTest(unittest.TestCase):
         body += "\n## Puede editar\n- eval/tools/fixtures.py\n## LÃ­mites del proyecto\nSin red, sin Orca real ni datos de cuenta.\n"
         spec["files"]["spec.md"] = body
         self.assertEqual(self.run_case("spec", spec), 0)
+        for window in ("5h", "5 h"):
+            variant = self.payload("spec"); variant["files"]["spec.md"] = body.replace("5 horas", window)
+            self.assertEqual(self.run_case("spec", variant), 0)
         for phrase in ("sin Orca real", "datos de cuenta"):
             missing = self.payload("spec"); missing["files"]["spec.md"] = missing["files"]["spec.md"].replace(phrase, "")
             self.assertEqual(self.run_case("spec", missing), 1)
+
+    def test_spec_parafrasis_y_negativos(self) -> None:
+        spec = self.payload("spec")
+        body = spec["files"]["spec.md"].replace("# Reservas sintéticas", "# Cálculo de reservas").replace("topes 80/95/90", "reserva general de 80, ventana de 5 horas de 95 y ventana semanal de 90").replace("Sin red", "No accedas a la red")
+        spec["files"]["spec.md"] = body
+        self.assertEqual(self.run_case("spec", spec), 0)
+        for before, after in (("dos exclusiones sintéticas", "una exclusión sintética"), ("reserva general de 80, ventana de 5 horas de 95 y ventana semanal de 90", "80 día, 95 semana, 90 mes")):
+            bad = self.payload("spec"); bad["files"]["spec.md"] = body.replace(before, after)
+            self.assertEqual(self.run_case("spec", bad), 1)
 
     def test_prompt_publico_no_expone_fixture(self) -> None:
         out = prompt.main(["wave"])
