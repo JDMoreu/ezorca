@@ -9,6 +9,7 @@ versión, [SemVer](https://semver.org/lang/es/).
 
 - El modo inteligente consulta presupuesto vivo antes de elegir y cubre los papeles con candidatos de `pick` ordenados por precio.
 - `resources.py` clasifica por precio de salida; `discover.py` conserva el inventario y deja sin nivel los modelos sin precio.
+- Evaluación A/B con proceso equivalente (T2, 3 pares): 9/9 pruebas ocultas en ambos brazos, diferencia del juez no concluyente (20,7 frente a 21,3); costo y tiempo medidos en US$ con precios de models.dev.
 
 ## [1.3.0] – 2026-11-25
 

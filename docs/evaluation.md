@@ -190,6 +190,8 @@ sesiones en `session` sino en `session_v2`, y solo medir contra registros reales
 
 ## A/B justo: sesiones nuevas con y sin EzOrca
 
+> Nota: este ensayo comparó procesos distintos (directo frente a ciclos de planificación y validación); sus diferencias de tiempo y costo no se atribuyen solo a la skill. Ver [Resultados del A/B justo con proceso equivalente](#resultados-del-ab-justo-con-proceso-equivalente-t2).
+
 Ocho sesiones nuevas de Claude Code con Claude Opus, cada una en un worktree
 nuevo del mismo commit y con el mismo texto de tarea. La única diferencia entre
 brazos fue la frase inicial «Usa EzOrca para lo siguiente.». Ambos brazos
@@ -384,7 +386,60 @@ de cuenta antes/después, más fallos, reintentos y exclusiones. El reporte fina
 incluye `n` completo por brazo, pares excluidos y su motivo, calidad, tiempo,
 US$, delta de ventana, incertidumbres y cualquier campo `no verificable`.
 
+## Resultados del A/B justo con proceso equivalente (T2)
+
+### Diseño
+
+Tarea T2 (dos mejoras en `launch_wave.py` y `discover.py`) desde la base `3e33efe`, con 3 pares (n = 3 por brazo). Cada intento fue una sesión nueva de Claude Code con Claude Sonnet 5.5 (esfuerzo medio) en ambos brazos. La única diferencia fue el prefijo «Usa EzOrca para lo siguiente.»; ambos brazos siguieron el mismo texto de proceso: planificar, implementar y probar, validar en una sesión independiente y corregir.
+
+La validación independiente la hizo GPT-5.6 Luna (esfuerzo medio, otra familia), en una sesión nueva por candidato y con los mismos criterios. El juez ciego fue GPT-6.1 Terra (esfuerzo medio) con seis candidatos en carpetas A–F en orden aleatorio, 5 criterios y máximo 25; su primer intento quedó incompleto y se repitió con método incremental. Las pruebas ocultas fueron 9 casos escritos por un tercero solo desde el texto público. El costo se midió con los tokens de los registros locales (`scripts/cost_report.py`) y los precios de `models.dev` del 24-nov-2026 (entrada, salida, caché leída y escrita), en el nivel de precio base; el contexto máximo por llamada de los validadores fue de 53 000 tokens, bajo el umbral de 272 000.
+
+### Resultados por intento
+
+Minutos activos = implementación + validación + corrección. US$ = chat + validación.
+
+| Par | Brazo | Juez (/25) | Pruebas ocultas | Min activos | Salida del chat | US$ | Hallazgo de validación |
+|---|---|---|---|---|---|---|---|
+| 1 | Sin EzOrca | 22 | 9/9 | 5,1 | 10 554 | 0,3838 | ninguno |
+| 1 | Con prefijo | 21 | 9/9 | 5,7 | 15 079 | 0,4531 | mayor, corregido |
+| 2 | Con prefijo | 22 | 9/9 | 4,9 | 14 100 | 0,4597 | ninguno |
+| 2 | Sin EzOrca | 21 | 9/9 | 4,2 | 9 628 | 0,3682 | ninguno |
+| 3 | Sin EzOrca | 19 | 9/9 | 5,1 | 9 377 | 0,3604 | mayor, corregido |
+| 3 | Con prefijo | 21 | 9/9 | 5,2 | 12 945 | 0,4139 | mayor, corregido |
+
+### Resultados por brazo (promedio de 3)
+
+| Brazo | Juez (/25) | Pruebas ocultas | Min activos | Salida del chat | US$ (chat + validación = total) | Hallazgo mayor |
+|---|---|---|---|---|---|---|
+| Sin EzOrca | 20,7 | 9/9 en los 3 | 4,8 | 9 853 | 0,342 + 0,029 = 0,371 | 1 de 3 |
+| Con prefijo «Usa EzOrca» | 21,3 | 9/9 en los 3 | 5,3 | 14 041 | 0,417 + 0,025 = 0,442 | 2 de 3 |
+
+El único hallazgo mayor de las validaciones fue el mismo en 6 de los 9 intentos validados (3 de los 6 del A/B principal y los 3 del brazo suplementario): `repo` o `worktree_name` compuestos solo por espacios aceptados. La plantilla de validación lo mencionaba como ejemplo, lo que pudo sesgar a los validadores. Todas las correcciones las hizo la misma sesión del intento, y la coordinación las verificó con pruebas, pruebas ocultas y un caso de espacios (exit 2).
+
+### Brazo suplementario con invocación explícita
+
+Brazo suplementario (exploratorio; desviación declarada del protocolo): 3 intentos con el texto «Usa EzOrca para lo siguiente. Carga primero la skill ezorca con la herramienta Skill.». Los 3 cargaron la skill, pero ninguno corrió `choose_mode.py` ni delegó: trabajaron en modo directo. Pruebas ocultas 9/9 en los tres; minutos activos 5,6 / 4,8 / 4,9 (promedio 5,1); US$ 0,5667 / 0,4156 / 0,5277 (promedio 0,503, chat y validación). Se validaron con Claude Haiku 5.5 y no con GPT-5.6 Luna, porque el plan de Codex estaba a un punto de su tope. Los 3 recibieron el mismo hallazgo mayor (valores en blanco), corregido. No hubo juez ciego nuevo. El precio de Haiku usa el nivel base; no se verificó que ninguna llamada superara el umbral de 100 000 tokens del nivel alto, así que su costo de validación puede estar subestimado.
+
+### Lectura
+
+1. **Calidad.** Con el mismo proceso no hay diferencia de calidad observable: 9/9 en todos los intentos y 20,7 frente a 21,3 en el juez, dentro del ruido.
+2. **Costo y tiempo.** El brazo con prefijo costó más (+0,07 US$ por intento, +19 %) y tardó 0,5 min más, pero con n = 3 no es concluyente.
+3. **Activación de la skill.** Escribir «Usa EzOrca» no bastó para activar la skill con un chat Sonnet y este texto: 0 de 3. Con instrucción explícita sí la cargó (3 de 3), pero ninguno de los 3 corrió `choose_mode.py` ni delegó: trabajaron directo.
+4. **Procesos distintos.** Por tanto, las diferencias de tiempo y costo de los A/B [justo](#ab-justo-sesiones-nuevas-con-y-sin-ezorca) y del [modo inteligente](#prueba-del-modo-inteligente-chat-de-menor-nivel) reflejan procesos distintos (directo frente a ciclos), no solo la skill.
+5. **Pendiente.** Probar una tarea grande o de riesgo donde el selector elija delegar o coordinar, y reforzar la descripción de la skill para que se active con «Usa EzOrca».
+
+### Límites
+
+- **n = 3 por brazo.** Un solo modelo de chat (Claude Sonnet 5.5) y una sola tarea.
+- **Ruido.** Diferencias de 0,6 puntos del juez y de US$ 0,07 caen dentro del ruido.
+- **Un solo juez LLM.** Su hallazgo sobre simular `os.name` en las pruebas es una deducción no ejecutada; las suites pasaron en la máquina de prueba.
+- **Asignación.** La coordinación vio qué id correspondía a qué brazo antes del juicio, pero no se lo dio al juez.
+- **Cuota no atribuida.** El cambio de las ventanas de cuota por plan no se pudo atribuir (coordinación y reinicio de Codex en la misma ventana); queda como no verificable. Delta total observado en la ventana del A/B (instantáneas de `orca account list` antes y después, que incluyen la coordinación y las validaciones, por lo que no se atribuye a ningún brazo): Claude, ventana de 5 h 9 % a 27 % y semanal 43 % a 45 %; Codex, semanal 86 % a 88 % (su ventana de 5 h se reinició en ese lapso, así que su consumo no es verificable); OpenCode Go sin cambio.
+- **Proceso.** El ciclo lo impone el texto común, así que la ventaja de EzOrca sobre un proceso sin guía no se midió.
+
 ## Prueba del modo inteligente: chat de menor nivel
+
+> Nota: este ensayo comparó procesos distintos (directo frente a ciclos de planificación y validación); sus diferencias de tiempo y costo no se atribuyen solo a la skill. Ver [Resultados del A/B justo con proceso equivalente](#resultados-del-ab-justo-con-proceso-equivalente-t2).
 
 ### Diseño
 
