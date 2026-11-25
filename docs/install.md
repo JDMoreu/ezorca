@@ -60,6 +60,20 @@ En Windows: `rmdir /s /q "%USERPROFILE%\.agents\skills\ezorca"`.
 
 ## Ajustar la clasificación de modelos
 
-`scripts/resources.py` traduce el precio de salida por millón a escalones usando los límites ordenados de `scripts/tiers.json`; el nombre no decide:
+`scripts/resources.py` traduce el precio de salida por millón a escalones usando los límites ordenados de `scripts/tiers.json`; el nombre no decide.
+
+```json
+{
+  "price_output_per_million": [
+    {"tier": "gratis", "max": 0},
+    {"tier": "economico", "max": 0.6},
+    {"tier": "economico-capaz", "max": 2},
+    {"tier": "medio", "max": 12},
+    {"tier": "frontera", "max": null}
+  ]
+}
+```
+
+Para mover los límites de precio por nivel, edita ese archivo: cada `max` es el precio de salida máximo en dólares por millón de tokens y el último nivel (`null`) no tiene tope.
 
 `discover.py` conserva el inventario, deja `tier: null` para precio desconocido y regenera cachés que usaban reglas por nombre. Esos modelos se muestran para diagnóstico, pero nunca se declaran elegibles.

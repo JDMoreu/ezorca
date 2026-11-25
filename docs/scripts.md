@@ -2,6 +2,28 @@
 
 `<skill>` es la carpeta de la skill instalada, por ejemplo `~/.agents/skills/ezorca`. Todos los scripts viven en `scripts/`, usan solo la biblioteca estándar de Python 3.11 o superior, escriben JSON por stdout y devuelven 0 si todo va bien, 1 si una comprobación sale negativa y 2 si el uso o los datos son inválidos. La regla: si un script existe para un paso, se usa en vez de hacerlo a mano. Cuándo usar cada uno, en [references/scripts.md](../references/scripts.md).
 
+## resources.py
+
+Entrega el presupuesto de cuota y el catálogo de precios antes de delegar: lee los límites de Orca, los modelos de OpenCode, Codex y Claude, y los precios públicos de `models.dev`, y devuelve los candidatos ordenados por precio de salida.
+
+```bash
+python scripts/resources.py --reserve 80 --reserve-window 5h=95 --reserve-window week=90
+```
+
+| Flag | Efecto |
+|---|---|
+| `--reserve N` | Uso (0–100 %) desde el cual un plan se bloquea; por omisión 80. |
+| `--reserve-plan PLAN=N` | Tope propio para `claude`, `codex` u `opencodeGo`; repetible. |
+| `--reserve-window VENTANA=N` | Tope por ventana (`5h`, `week`, `month`); prevalece sobre el del plan; repetible. |
+| `--exhausted <plan\|opencode\|agente:modelo>` | Marca como agotado lo que falló por cuota en esta sesión; repetible. |
+| `--max-age-days D` | Edad máxima de la caché de precios antes de descargarla de nuevo; por omisión 7. Una caché reciente con JSON inválido se descarga una vez. |
+| `--cache-dir RUTA` | Carpeta de la caché (`models.dev.json`); por omisión `~/.cache/ezorca`. |
+| `--full RUTA` | Escribe en ese archivo el inventario completo de candidatos. |
+
+Exit 0: hay niveles en `available`; 1: ningún modelo elegible; 2: argumentos, catálogo o fuentes inválidos (mensaje `error: …` en stderr).
+
+Campos del JSON: `plans` (uso por ventana y `blocked` de cada plan), `available` (niveles con candidatos), `pick` (hasta 3 candidatos por nivel, de menor a mayor precio), `blocked` (motivo de cada bloqueo) y `warnings` (fuentes no disponibles o modelos sin precio). La salida compacta no pasa de 1500 bytes: si se excede, recorta primero avisos, luego candidatos y luego bloqueos; `--full` conserva todo.
+
 ## discover.py
 
 Lista los agentes instalados y el inventario de OpenCode. Deja `tier: null` para modelos sin precio; `resources.py` es la autoridad. Paso del Run: **descubrir**, una vez por Run.
@@ -221,7 +243,7 @@ Opciones: `--claude-dir DIR`, `--codex-dir DIR`, `--opencode-db FILE` (por omisi
 
 `resources.py` consume `price_output_per_million` como única clasificación: compara el precio de salida por millón con límites ordenados. `discover.py` deja `tier: null` para modelos cuyo precio aún no se consultó y regenera cachés antiguas con niveles por nombre. Los modelos sin precio no son elegibles.
 
-Los límites están en `price_output_per_million`; los escalones son `gratis`, `economico`, `economico-capaz`, `medio` y `frontera`. `agents` fija solo el nivel declarado del agente sin listado, que sale con `model: "configurado"`.
+Los límites están en `price_output_per_million`; los escalones son `gratis`, `economico`, `economico-capaz`, `medio` y `frontera`.
 
 ## Pruebas
 

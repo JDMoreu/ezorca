@@ -141,7 +141,7 @@ def main(argv: list[str] | None = None) -> int:
     """Punto de entrada: imprime el informe JSON y gestiona la caché."""
     use_utf8_stdout()
     parser = argparse.ArgumentParser(
-        description="Lista agentes y clasifica los modelos de OpenCode por costo usando tiers.json."
+        description="Lista agentes e inventario de modelos de OpenCode; no clasifica."
     )
     parser.add_argument(
         "--cache", type=cache_path, metavar="RUTA",

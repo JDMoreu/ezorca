@@ -119,6 +119,21 @@ class ResourcesTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertTrue(json.loads(out)["warnings"])
 
+    def test_cache_reciente_corrupta_se_descarga_una_vez(self) -> None:
+        self.setup_sources()
+        self.cache.write_text("{no es json", encoding="utf-8")
+        called = []
+        with mock.patch.object(resources, "download_prices", side_effect=lambda: (called.append(1) or self.payload)),              mock.patch.object(resources, "run_cmd", return_value=(0, json.dumps(self.account), "")):
+            code, _, _ = self.invoke()
+        self.assertEqual((code, called), (0, [1]))
+
+    def test_cache_reciente_corrupta_y_descarga_fallida_termina_en_dos(self) -> None:
+        self.setup_sources()
+        self.cache.write_text("{no es json", encoding="utf-8")
+        with mock.patch.object(resources, "download_prices", side_effect=OSError("sin red")):
+            code, out, _ = self.invoke()
+        self.assertEqual((code, out), (2, ""))
+
     def test_sin_precios_termina_en_dos(self) -> None:
         with mock.patch.object(resources, "download_prices", side_effect=OSError("offline")):
             code, out, _ = self.invoke()

@@ -26,8 +26,10 @@ def download_prices() -> dict[str, Any]:
 def load_prices(cache: Path, max_days: float) -> tuple[dict, float, list[str]]:
     """Carga precios y conserva un archivo viejo si falla la actualización."""
     warnings = []
-    try: age = (time.time() - cache.stat().st_mtime) / 86400 if cache.is_file() else None
-    except OSError: age = None
+    try:
+        age = (time.time() - cache.stat().st_mtime) / 86400 if cache.is_file() else None
+        if age is not None and age <= max_days: json.loads(cache.read_text(encoding="utf-8"))
+    except (OSError, ValueError): age = None
     if age is None or age > max_days:
         try:
             data = download_prices(); cache.parent.mkdir(parents=True, exist_ok=True)
