@@ -124,6 +124,123 @@ class DiscoverTest(unittest.TestCase):
         self.assertNotIn("viejo", self.cache.read_text(encoding="utf-8"))
         self.assertEqual(json.loads(out)["agents"], ["claude", "codex", "opencode"])
 
+    def test_cache_path_traduce_rutas_git_bash_en_windows(self) -> None:
+        with mock.patch.object(discover, "IS_WINDOWS", True):
+            self.assertEqual(
+                discover.cache_path("/c/Users/x/roster.json"),
+                Path("C:/Users/x/roster.json"),
+            )
+            self.assertEqual(discover.cache_path("/D/datos"), Path("D:/datos"))
+            self.assertEqual(discover.cache_path("/c"), Path("C:/"))
+            self.assertEqual(discover.cache_path("/cache/x.json"), Path("/cache/x.json"))
+            self.assertEqual(discover.cache_path("C:/a/b.json"), Path("C:/a/b.json"))
+
+    def test_cache_invalida_se_regenera(self) -> None:
+        casos = {
+            "json incompleto": b'{"incompleto": ',
+            "utf-8 inválido": b"\xff",
+            "NaN": b'{"valor": NaN}',
+            "Infinity": b'{"valor": Infinity}',
+            "-Infinity": b'{"valor": -Infinity}',
+            "entero demasiado largo": b"[" + b"1" * 5000,
+        }
+        for caso, contenido in casos.items():
+            with self.subTest(caso=caso):
+                self.cache.write_bytes(contenido)
+                fake = self.fake()
+                with mock.patch.object(discover, "run_cmd", fake):
+                    code, out, err = run_main(["--cache", str(self.cache)])
+                self.assertEqual(code, 0, err)
+                self.assertEqual(len(fake.calls), 2)
+                self.assertEqual(self.cache.read_text(encoding="utf-8"), out)
+                self.assertEqual(json.loads(out)["agents"], ["claude", "codex", "opencode"])
+
+    def test_cache_con_error_de_recursion_se_regenera(self) -> None:
+        cached = "[["
+        self.cache.write_text(cached, encoding="utf-8")
+        loads = json.loads
+
+        def decode(text: str, **kwargs: object) -> object:
+            if text == cached:
+                raise RecursionError("anidamiento excesivo")
+            return loads(text, **kwargs)
+
+        fake = self.fake()
+        with (
+            mock.patch.object(discover.json, "loads", side_effect=decode),
+            mock.patch.object(discover, "run_cmd", fake),
+        ):
+            code, out, err = run_main(["--cache", str(self.cache)])
+        self.assertEqual(code, 0, err)
+        self.assertEqual(len(fake.calls), 2)
+        self.assertEqual(self.cache.read_text(encoding="utf-8"), out)
+
+    def test_cache_ilegible_devuelve_2(self) -> None:
+        self.cache.write_text("{}", encoding="utf-8")
+        fake = mock.Mock()
+        with (
+            mock.patch.object(discover.Path, "read_text", side_effect=OSError("acceso denegado")),
+            mock.patch.object(discover, "run_cmd", fake),
+        ):
+            code, out, err = run_main(["--cache", str(self.cache)])
+        self.assertEqual(code, 2)
+        self.assertEqual(out, "")
+        self.assertEqual(err, f"error: no se pudo leer la caché en {self.cache}: acceso denegado\n")
+        fake.assert_not_called()
+
+    def test_cache_path_no_cambia_fuera_de_windows(self) -> None:
+        with mock.patch.object(discover, "IS_WINDOWS", False):
+            self.assertEqual(
+                discover.cache_path("/c/Users/x/roster.json"),
+                Path("/c/Users/x/roster.json"),
+            )
+
+    @unittest.skipUnless(os.name == "nt", "la forma Git Bash solo aplica en Windows")
+    def test_cache_acepta_ruta_git_bash(self) -> None:
+        drive, rest = os.path.splitdrive(str(self.cache))
+        bash = "/" + drive[0].lower() + rest.replace("\\", "/")
+        with mock.patch.object(discover, "run_cmd", self.fake()):
+            code, out, err = run_main(["--cache", bash])
+        self.assertEqual(code, 0, err)
+        self.assertTrue(self.cache.is_file())
+        self.assertEqual(json.loads(self.cache.read_text(encoding="utf-8")), json.loads(out))
+
+        def explota(args: list[str]) -> tuple[int, str, str]:
+            raise AssertionError(f"no debía ejecutarse: {args}")
+
+        with mock.patch.object(discover, "run_cmd", explota):
+            code, cached_out, err = run_main(["--cache", bash])
+        self.assertEqual(code, 0, err)
+        self.assertEqual(json.loads(cached_out), json.loads(out))
+
+    def test_cache_es_un_directorio_devuelve_2(self) -> None:
+        carpeta = self.dir / "carpeta"
+        carpeta.mkdir()
+        with mock.patch.object(discover, "run_cmd", self.fake()):
+            code, out, err = run_main(["--cache", str(carpeta)])
+        self.assertEqual(code, 2)
+        self.assertEqual(out, "")
+        self.assertIn("no se pudo escribir la caché en", err)
+
+    def test_cache_con_padre_archivo_devuelve_2(self) -> None:
+        archivo = self.dir / "archivo.txt"
+        archivo.write_text("x", encoding="utf-8")
+        with mock.patch.object(discover, "run_cmd", self.fake()):
+            code, out, err = run_main(["--cache", str(archivo / "roster.json")])
+        self.assertEqual(code, 2)
+        self.assertEqual(out, "")
+        self.assertIn("no se pudo escribir la caché en", err)
+
+    def test_cache_sin_archivo_tras_escribir_devuelve_2(self) -> None:
+        with (
+            mock.patch.object(discover.Path, "write_text", lambda self, *a, **k: 0),
+            mock.patch.object(discover, "run_cmd", self.fake()),
+        ):
+            code, out, err = run_main(["--cache", str(self.cache)])
+        self.assertEqual(code, 2)
+        self.assertEqual(out, "")
+        self.assertIn("no se pudo escribir la caché en", err)
+
     def test_opencode_models_falla_y_avisa(self) -> None:
         fake = self.fake(models=(1, "", "sin conexión"))
         with mock.patch.object(discover, "run_cmd", fake):

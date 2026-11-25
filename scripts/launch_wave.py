@@ -45,16 +45,20 @@ def normalize_worker(item: Any) -> dict[str, Any]:
     if not isinstance(spec_file, str) or not spec_file.strip():
         raise ValueError(f"Falta spec_file en el worker {item['name']}")
     worktree = item.get("worktree") or "current"
-    if worktree not in ("current", "new-child"):
-        raise ValueError(f"worktree debe ser current o new-child en {item['name']}")
+    if worktree not in ("current", "new-child", "new-top-level"):
+        raise ValueError(f"worktree debe ser current, new-child o new-top-level en {item['name']}")
     optional = {}
-    for field in ("model", "effort", "base_branch", "worktree_name"):
+    for field in ("model", "effort", "base_branch", "worktree_name", "repo"):
         value = item.get(field)
         if value is not None and not isinstance(value, str):
             raise ValueError(f"{field} debe ser texto o null en {item['name']}")
         optional[field] = value or None
-    if worktree == "new-child" and not optional["worktree_name"]:
-        raise ValueError(f"new-child exige worktree_name en {item['name']}")
+    if worktree != "current" and not (optional["worktree_name"] or "").strip():
+        raise ValueError(f"{worktree} exige worktree_name en {item['name']}")
+    if worktree == "new-top-level" and not (optional["repo"] or "").strip():
+        raise ValueError(f"new-top-level exige repo en {item['name']}")
+    if worktree != "new-top-level" and optional["repo"]:
+        raise ValueError(f"repo solo se admite con new-top-level en {item['name']}")
     return {
         "name": item["name"], "spec_file": spec_file, "agent": item["agent"],
         "title": item["title"], "worktree": worktree, **optional,
@@ -92,7 +96,9 @@ def build_command(run: str, worker: dict[str, Any]) -> list[str]:
         args += ["--model", worker["model"]]
         if worker["effort"]:
             args += ["--effort", worker["effort"]]
-    if worker["worktree"] == "new-child":
+    if worker["worktree"] != "current":
+        if worker["worktree"] == "new-top-level":
+            args += ["--repo", worker["repo"]]
         args += ["--name", worker["worktree_name"], "--setup", "skip"]
         if worker["base_branch"]:
             args += ["--base-branch", worker["base_branch"]]
@@ -167,15 +173,10 @@ def main(argv: list[str] | None = None) -> int:
         commands = [(subprocess.list2cmdline(a) if os.name == "nt" else shlex.join(a)) for a in argvs]
         for command in commands:
             print(command, file=sys.stderr)
-        emit(
-            {
-                "launched": [
-                    {"name": w["name"], "exit": None, "receipt": None, "command": c}
-                    for w, c in zip(ready, commands)
-                ],
-                "deferred": deferred, "failed": [], "commands": argvs,
-            }
-        )
+        emit({"launched": [
+            {"name": w["name"], "exit": None, "receipt": None, "command": c}
+            for w, c in zip(ready, commands)
+        ], "deferred": deferred, "failed": [], "commands": argvs})
         return 0
     try:
         handle = args.receipts.open("a", encoding="utf-8") if args.receipts else None
@@ -194,6 +195,5 @@ def main(argv: list[str] | None = None) -> int:
                 print(str(error), file=sys.stderr)
     emit({"launched": launched, "deferred": deferred, "failed": failed, "receipt_errors": errors})
     return 1 if failed or errors else 0
-
 if __name__ == "__main__":
     raise SystemExit(main())

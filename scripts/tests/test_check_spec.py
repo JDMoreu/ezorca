@@ -170,6 +170,67 @@ class CheckSpecTest(unittest.TestCase):
         self.assertEqual(code, 1, err)
         self.assertEqual(json.loads(out)[0]["missing"], ["Ejemplo"])
 
+    def test_plurales_explicitos_aceptados(self) -> None:
+        text = (
+            "# Tarea\n\n## Pueden editar\n- `scripts/a.py`\n\n## Ejemplos\nx\n\n"
+            "## Comprobación\n- nada\n\n## Límites del proyecto\nnada\n\nworker_done\n"
+        )
+        path = self.spec("plurales.md", text)
+        code, out, err = run_main([str(path)])
+
+        self.assertEqual(code, 0, err)
+        self.assertEqual(json.loads(out)[0]["missing"], [])
+
+    def test_ejemplos_en_negrita_aceptado(self) -> None:
+        text = (
+            "# Tarea\n\n## Puede editar\n- `scripts/a.py`\n\n**Ejemplos:** entrada y salida\n\n"
+            "## Comprobaciones\n- nada\n\n## Límites del proyecto\nnada\n\nworker_done\n"
+        )
+        path = self.spec("ejemplos-negrita.md", text)
+        code, out, err = run_main([str(path)])
+
+        self.assertEqual(code, 0, err)
+        self.assertEqual(json.loads(out)[0]["missing"], [])
+
+    def test_plurales_inventados_rechazados(self) -> None:
+        base = (
+            "# Tarea\n\n## Puede editar\n- `scripts/a.py`\n\n## Ejemplo\nx\n\n"
+            "## Comprobaciones\n- nada\n\n## Límites del proyecto\nnada\n\nworker_done\n"
+        )
+        cases = {
+            "## Ejemplosidad: x": ("## Ejemplo", "Ejemplo"),
+            "## Comprobacioneses": ("## Comprobaciones", "Comprobaciones"),
+            "## Límites del proyectos": ("## Límites del proyecto", "Límites del proyecto"),
+        }
+        for falso, (real, falta) in cases.items():
+            with self.subTest(linea=falso):
+                path = self.spec("inventado.md", base.replace(real, falso))
+                code, out, _ = run_main([str(path)])
+
+                self.assertEqual(code, 1)
+                self.assertEqual(json.loads(out)[0]["missing"], [falta])
+
+        revision = (
+            "# Revisión\n\n## Ques devolver\nnada\n\nno verificable\n\n"
+            "## Método y límites\nnada\n\nworker_done\n"
+        )
+        path = self.spec("ques.md", revision)
+        code, out, _ = run_main(["--kind", "revision", str(path)])
+
+        self.assertEqual(code, 1)
+        self.assertEqual(json.loads(out)[0]["missing"], ["Comprobaciones"])
+
+    def test_metodos_y_limites_aceptado_en_revision(self) -> None:
+        text = (
+            "# Revisión\n\n## Qué devolver\nUn veredicto.\n\nno verificable\n\n"
+            "## Métodos y límites\nnada\n\nworker_done\n"
+        )
+        path = self.spec("metodos.md", text)
+        code, out, err = run_main(["--kind", "revision", str(path)])
+
+        self.assertEqual(code, 0, err)
+        self.assertEqual(json.loads(out)[0]["missing"], [])
+
     def test_help_sale_con_0(self) -> None:
         out, err = io.StringIO(), io.StringIO()
         with (

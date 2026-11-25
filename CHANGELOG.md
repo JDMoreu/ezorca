@@ -3,6 +3,21 @@
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y la
 versión, [SemVer](https://semver.org/lang/es/).
 
+## [1.2.0] – 2026-11-25
+
+### Cambiado
+
+- La skill decide entre modo directo y coordinado antes de planear.
+- La regla que asigna la escritura de código a los Goldfish aplica solo en Runs coordinados.
+- El README y la documentación reflejan los resultados del A/B justo.
+
+### Corregido
+
+- `check_spec.py` acepta variantes explícitas en plural de sus etiquetas («Ejemplos», «Métodos y límites») sin aceptar palabras que solo empiezan igual.
+- `launch_wave.py` admite `new-top-level` con `repo` y `worktree_name`. Rechaza valores vacíos o con solo espacios.
+- `discover.py --cache` interpreta rutas de Git Bash en Windows y sale con código 2 si no puede leer o escribir la caché.
+- `discover.py` regenera la caché cuando contiene JSON inválido, incluidos valores `NaN` y JSON malformado.
+
 ## [1.1.0] – 2026-11-24
 
 ### Agregado

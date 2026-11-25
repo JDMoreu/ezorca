@@ -4,7 +4,7 @@ Escribe cada spec en un archivo y pásala con `--spec-file`. El preámbulo de Or
 
 ## Implementación (junior con modelo económico)
 
-Un modelo económico no rellena huecos. Dale todo lo que necesita, incluido al menos un ejemplo concreto de entrada y salida esperada (o de comando y resultado); sin ese ejemplo la spec no está lista. El Elefante o el senior, por defecto, no escriben código ni pruebas, salvo que el usuario indique otra cosa: describen los casos de aceptación (entrada y resultado esperado) y el junior los escribe como pruebas antes del código. Si la tarea llegó al último escalón, la sección «Solución descrita» lleva la solución de la frontera en prosa.
+Un modelo económico no rellena huecos. Dale todo lo que necesita, incluido al menos un ejemplo concreto de entrada y salida esperada (o de comando y resultado); sin ese ejemplo la spec no está lista. En un Run coordinado, el Elefante y el senior no escriben código ni pruebas, salvo que el usuario indique otra cosa. Describen los casos de aceptación (entrada y resultado esperado) y el junior los convierte en pruebas antes de implementar el cambio. Si la tarea llegó al último escalón, la sección «Solución descrita» lleva la solución de la frontera en prosa.
 
 ```text
 Goldfish N – <tema corto>

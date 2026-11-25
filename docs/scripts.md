@@ -14,7 +14,7 @@ python <skill>/scripts/discover.py --cache <carpeta del Run>/roster.json
 {"generated_at": "...", "agents": ["claude", "codex", "opencode"], "models": [{"agent": "opencode", "model": "opencode-go/deepseek-v4.1-flash", "tier": "economico"}, {"agent": "codex", "model": "configurado", "tier": "medio"}]}
 ```
 
-`warnings` aparece si un comando falló sin impedir el informe. Opciones: `--cache RUTA` (si está fresca, no ejecuta comandos), `--max-age-hours HORAS` (12). Exit 0 con el informe; 2 si no pudo leer el entorno.
+`warnings` aparece si un comando falló sin impedir el informe. Opciones: `--cache RUTA` (si está fresca y contiene JSON válido, no ejecuta comandos), `--max-age-hours HORAS` (12). En Windows, una ruta estilo Git Bash como `/c/Users/x/roster.json` se interpreta como `C:/Users/x/roster.json`, al leer y al escribir la caché. Si la caché contiene JSON inválido, se regenera, y si hay un error de lectura, sale con exit 2 y el mensaje `error: no se pudo leer la caché en <ruta>: <detalle>` en stderr. Si la caché no se puede escribir, sale con exit 2 y el mensaje `error: no se pudo escribir la caché en <ruta>: <detalle>` en stderr. El informe se emite con exit 0. Si no se pudo leer el entorno, sale con exit 2.
 
 ## check_spec.py
 
@@ -49,10 +49,12 @@ Con `--dry-run` cada `launched` trae `command` y `receipt: null`, y se añade `c
 ```json
 {"run": "<id del Run>", "cap_per_model": 4,
  "workers": [{"name": "g1", "spec_file": "specs/g1.md", "agent": "opencode", "title": "Goldfish 1 – tema", "worktree": "current",
-              "model": null, "effort": null, "base_branch": null, "worktree_name": null}]}
+              "model": null, "effort": null, "base_branch": null, "worktree_name": null, "repo": null}]}
 ```
 
-`name`, `spec_file`, `agent` y `title` son obligatorios y no vacíos; `name` no se repite. `cap_per_model` es un entero positivo. `worktree` es `current` (por omisión) o `new-child`, y `new-child` exige `worktree_name`. `model`, `effort`, `base_branch` y `worktree_name` son texto o `null`; `effort` solo se envía cuando `model` no es `null` (los dos son opciones de `worker-start` que el script reenvía).
+`name`, `spec_file`, `agent` y `title` son obligatorios y no vacíos; `name` no se repite. `cap_per_model` es un entero positivo. `worktree` es `current` (por omisión), `new-child` o `new-top-level`; `new-child` y `new-top-level` exigen `worktree_name`, y `new-top-level` exige además `repo`, que solo vale con ese valor (si falta `repo` o `worktree_name`, la tanda es inválida: exit 2 sin lanzar ningún worker); `repo` con `current` o `new-child` es inválido. Para `new-top-level` el comando lleva `--worktree new-top-level --repo <repo> --name <worktree_name> --setup skip`, más `--base-branch` si se da. `model`, `effort`, `base_branch`, `worktree_name` y `repo` son texto o `null`; `effort` solo se envía cuando `model` no es `null` (los dos son opciones de `worker-start` que el script reenvía).
+
+En `new-top-level`, un `repo` o `worktree_name` compuesto solo por espacios en blanco invalida la tanda y causa exit 2 sin lanzar ningún worker.
 
 ## stalled.py
 

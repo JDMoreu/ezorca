@@ -8,6 +8,7 @@ import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import time
@@ -17,6 +18,15 @@ from typing import Any
 
 TIERS_PATH = Path(__file__).with_name("tiers.json")
 TIMEOUT_SECONDS = 120
+IS_WINDOWS = os.name == "nt"
+
+
+def cache_path(raw: str) -> Path:
+    """Traduce una ruta estilo Git Bash (/c/...) a una ruta nativa de Windows."""
+    match = re.match(r"^/([A-Za-z])(/.*)?$", raw) if IS_WINDOWS else None
+    if match:
+        return Path(f"{match.group(1).upper()}:{match.group(2) or '/'}")
+    return Path(raw)
 
 
 def run_cmd(args: list[str]) -> tuple[int, str, str]:
@@ -126,48 +136,61 @@ def collect(tiers: dict[str, Any]) -> dict[str, Any]:
 def is_fresh(cache: Path, max_age_hours: float) -> bool:
     """Indica si el archivo de caché existe y no supera la antigüedad máxima."""
     try:
-        age = time.time() - cache.stat().st_mtime
-    except OSError:
+        info = cache.stat()
+    except (FileNotFoundError, NotADirectoryError):
         return False
-    return cache.is_file() and age < max_age_hours * 3600
+    return stat.S_ISREG(info.st_mode) and time.time() - info.st_mtime < max_age_hours * 3600
+
+
+def reject_json_constant(value: str) -> None:
+    raise ValueError(f"Constante JSON no válida: {value}")
 
 
 def main(argv: list[str] | None = None) -> int:
     """Punto de entrada: imprime el informe JSON y gestiona la caché."""
     use_utf8_stdout()
     parser = argparse.ArgumentParser(
-        description=(
-            "Lista los agentes instalados y clasifica los modelos de OpenCode "
-            "por escalón de costo usando tiers.json."
-        )
+        description="Lista agentes y clasifica los modelos de OpenCode por costo usando tiers.json."
     )
     parser.add_argument(
-        "--cache",
-        type=Path,
-        metavar="RUTA",
+        "--cache", type=cache_path, metavar="RUTA",
         help="archivo JSON de caché; si está fresco no se ejecutan comandos",
     )
     parser.add_argument(
-        "--max-age-hours",
-        type=float,
-        default=12.0,
-        metavar="HORAS",
+        "--max-age-hours", type=float, default=12.0, metavar="HORAS",
         help="antigüedad máxima de la caché en horas (por omisión 12)",
     )
     args = parser.parse_args(argv)
 
-    if args.cache and is_fresh(args.cache, args.max_age_hours):
-        sys.stdout.write(args.cache.read_text(encoding="utf-8"))
+    try:
+        fresh = args.cache and is_fresh(args.cache, args.max_age_hours)
+        cached = args.cache.read_text(encoding="utf-8") if fresh else None
+        if cached is not None:
+            json.loads(cached, parse_constant=reject_json_constant)
+    except (ValueError, RecursionError):  # Incluye JSONDecodeError y UnicodeDecodeError.
+        cached = None
+    except OSError as exc:
+        print(f"error: no se pudo leer la caché en {args.cache}: {exc}", file=sys.stderr)
+        return 2
+    if cached is not None:
+        sys.stdout.write(cached)
         return 0
 
     try:
         text = json.dumps(collect(load_tiers()), ensure_ascii=False, indent=2) + "\n"
-        if args.cache:
-            args.cache.parent.mkdir(parents=True, exist_ok=True)
-            args.cache.write_text(text, encoding="utf-8")
     except (RuntimeError, OSError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+
+    if args.cache:
+        try:
+            args.cache.parent.mkdir(parents=True, exist_ok=True)
+            args.cache.write_text(text, encoding="utf-8")
+            if not args.cache.is_file():
+                raise OSError("no se creó el archivo")
+        except OSError as exc:
+            print(f"error: no se pudo escribir la caché en {args.cache}: {exc}", file=sys.stderr)
+            return 2
 
     sys.stdout.write(text)
     return 0

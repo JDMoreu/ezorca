@@ -43,11 +43,13 @@ def has_label(text: str, labels: tuple[str, ...]) -> bool:
 def missing_implementacion(text: str, flat: str) -> list[str]:
     """Devuelve lo que falta a un encargo de implementación."""
     missing = []
-    if not has_label(text, ("Puede editar", "Archivos que puedes editar")):
+    if not has_label(
+        text, ("Puede editar", "Pueden editar", "Archivos que puedes editar")
+    ):
         missing.append("Puede editar")
-    if not has_label(text, ("Ejemplo",)):
+    if not has_label(text, ("Ejemplo", "Ejemplos")):
         missing.append("Ejemplo")
-    if not has_label(text, ("Comprobaciones",)):
+    if not has_label(text, ("Comprobaciones", "Comprobación")):
         missing.append("Comprobaciones")
     if not has_label(text, ("Límites del proyecto",)):
         missing.append("Límites del proyecto")
@@ -59,11 +61,11 @@ def missing_implementacion(text: str, flat: str) -> list[str]:
 def missing_revision(text: str, flat: str) -> list[str]:
     """Devuelve lo que falta a un encargo de revisión."""
     missing = []
-    if not has_label(text, ("Comprobaciones", "Qué devolver")):
+    if not has_label(text, ("Comprobaciones", "Comprobación", "Qué devolver")):
         missing.append("Comprobaciones")
     if "no verificable" not in flat:
         missing.append("no verificable")
-    metodo = has_label(text, ("Método y límites",)) or (
+    metodo = has_label(text, ("Método y límites", "Métodos y límites")) or (
         "leiste" in flat and "dedujiste" in flat
     )
     if not metodo:

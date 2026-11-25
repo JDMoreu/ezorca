@@ -12,8 +12,8 @@
 
 ## Papeles
 
-La tabla reúne los papeles más frecuentes. La columna «No hace por defecto» es el
-reparto que se aplica si el usuario no indica otra cosa.
+La tabla reúne los papeles más frecuentes en un Run coordinado. El usuario
+puede indicar otro reparto.
 
 | Papel | Quién | Hace | No hace por defecto |
 |---|---|---|---|
@@ -22,22 +22,24 @@ reparto que se aplica si el usuario no indica otra cosa.
 | Junior | Modelo económico, gratis o local | Todo el código y las pruebas, con encargo detallado | Decisiones de diseño abiertas |
 | QA | Otra familia de agente o sesión nueva y ciega | Revisión del resultado contra los criterios, sin ver el razonamiento del implementador | Corregir lo que revisa |
 
-Cuando la tarea es difícil, por defecto la frontera no la escribe: describe la interfaz, los casos con entrada y resultado esperado, los pasos y el archivo y el símbolo que hay que cambiar, y un junior la escribe. Resolver un conflicto al integrar también es escribir código: va a un junior. El usuario puede indicar otra cosa.
+Cuando la tarea es difícil, en un Run coordinado la frontera no la escribe: describe la interfaz, los casos con entrada y resultado esperado, los pasos y el archivo y el símbolo que hay que cambiar, y un junior la escribe. Resolver un conflicto al integrar también es escribir código: va a un junior. El usuario puede indicar otra cosa.
 
-**Papeles adaptativos.** Los papeles no son una lista fija: cada Run define los que necesita la tarea y cualquier agente o modelo puede ocupar cualquiera según su capacidad, su costo y su disponibilidad. La política de costo por defecto se mantiene: los modelos caros razonan y casi nunca escriben código salvo que el usuario diga otra cosa. La revisión va en una sesión distinta de la del autor, de otra familia de agente si hay. La tabla siguiente es orientativa: no obliga a abrir una sesión por papel.
+**Papeles adaptativos.** Los papeles no son una lista fija: cada Run define los que necesita la tarea y cualquier agente o modelo puede ocupar cualquiera según su capacidad, su costo y su disponibilidad. La política de costo por defecto se mantiene en un Run coordinado: los modelos caros razonan y casi nunca escriben código salvo que el usuario diga otra cosa; antes de planear, decide si conviene coordinar ([¿Coordinar o hacerlo directo?](../SKILL.md#coordinar-o-hacerlo-directo)). La revisión va en una sesión distinta de la del autor, de otra familia de agente si hay. La tabla siguiente es orientativa: no obliga a abrir una sesión por papel.
 
 | Papel de ejemplo | Qué hace | Modelo que suele convenir |
 |---|---|---|
 | Elefante (PM) | Coordina el Run, escribe los encargos, decide, integra y acepta | El modelo de este chat; caro |
 | Investigador | Busca, contrasta y resume fuentes antes de planear | Económico o medio, con acceso a web |
 | Arquitecto | Fija interfaces, descomposición y casos de aceptación | Medio o caro, solo razona |
-| Senior | Diseño difícil y revisión de riesgo | Caro; describe el código y por defecto no lo escribe |
+| Senior | Diseño difícil y revisión de riesgo | Caro; describe el código y en un Run coordinado no lo escribe |
 | Junior | Escribe el código y las pruebas con un encargo detallado | Económico, gratis o local |
 | Revisor de seguridad | Busca riesgos, permisos y datos expuestos, sin corregir | Medio o caro, solo lectura |
 | Tester | Ejecuta y amplía pruebas contra los criterios | Económico o medio |
 | Documentador | Redacta guías y referencias del cambio | Económico |
 
 ## Proporción
+
+Esta tabla orienta el reparto cuando el encargo ya se clasificó como coordinado.
 
 | Encargo | Equipo |
 |---|---|
@@ -67,7 +69,7 @@ Lanza un Goldfish por perspectiva que necesite contexto limpio, otro agente o su
 En el plan, cada papel lleva una línea: `papel → agente y modelo elegidos de lo descubierto → nivel → motivo (capacidad frente a costo)`. La primera identifica al propio Elefante (el agente y el modelo del chat que coordina) y lo que decide: criterios de éxito, encargos y aceptación. Nunca dejes a «el coordinador» sin agente ni modelo. Por ejemplo:
 
 ```text
-Elefante (PM): Claude, modelo de este chat (caro) — fija los criterios, escribe los encargos, integra y acepta; por defecto no escribe código.
+Elefante (PM): Claude, modelo de este chat (caro) — fija los criterios, escribe los encargos, integra y acepta; en un Run coordinado no escribe código.
 Junior: OpenCode <proveedor/modelo-a> (económico) — el más capaz de los económicos listados; la tarea está bien definida.
 QA: Codex, modelo configurado (medio) — otra familia; riesgo bajo, basta lista cerrada.
 Senior: no se usa — sin diseño abierto ni riesgo alto.
@@ -77,7 +79,7 @@ Previsto: 2 sesiones económicas, 1 media y este chat.
 Con un solo agente, por ejemplo «solo tengo Codex»:
 
 ```text
-Elefante (PM): Codex, modelo de este chat — fija los criterios, escribe los encargos, integra y acepta; por defecto no escribe código.
+Elefante (PM): Codex, modelo de este chat — fija los criterios, escribe los encargos, integra y acepta; en un Run coordinado no escribe código.
 Junior: Codex con el modelo o el esfuerzo más bajo que liste --help (económico) — tarea bien definida.
 QA: Codex en sesión nueva y ciega (económico o medio) — no hay otra familia.
 Respaldo: Codex en esfuerzo medio; esfuerzo alto solo si el usuario lo aprueba.

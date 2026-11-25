@@ -1,9 +1,8 @@
 # Arquitectura de EzOrca
 
-EzOrca coordina una tarea en Orca con dos clases de sesión: una que piensa y
-revisa, y varias que escriben. La meta es un resultado de nivel frontera con la
-mitad del costo o menos (meta de diseño): el trabajo caro se concentra en decidir y comprobar, y
-el trabajo mecánico va a modelos económicos, gratis o locales.
+EzOrca primero decide si conviene trabajar directo o coordinar. En un Run
+coordinado, una sesión planea y revisa, y otras escriben el código.
+[¿Coordinar o hacerlo directo?](../SKILL.md#coordinar-o-hacerlo-directo)
 
 ## Elefante y Goldfish
 
@@ -24,8 +23,8 @@ ejemplos, no una lista fija. Cada Run define los que la tarea necesite —por
 ejemplo, investigador, diseñador, arquitecto, revisor de seguridad, tester,
 documentador o integrador—, y cualquier agente o modelo puede ocupar cualquiera
 de ellos según su capacidad, su costo y su disponibilidad. La política de costo
-por defecto se mantiene: los modelos caros se usan para razonar y casi nunca
-escriben código, salvo que el usuario diga otra cosa.
+por defecto se mantiene en un Run coordinado: los modelos caros se usan para
+razonar y casi nunca escriben código, salvo que el usuario diga otra cosa.
 
 Papeles habituales, como ejemplo:
 
@@ -41,14 +40,14 @@ le sirvan:
 
 | Encargo | Equipo |
 |---|---|
-| Trivial (una errata, una edición mecánica) | Un junior. Sin QA. |
-| Pequeño y bien definido | Un junior y un pase QA si el cambio toca lógica. |
-| Mediano o con partes independientes | Juniors en paralelo (unas 4 por tanda y modelo), cada uno en su worktree con archivos delimitados, y un QA. |
+| Trivial (una errata, una edición mecánica) | Directo: lo hace el modelo del chat. Sin QA. |
+| Pequeño y bien definido | Directo, con un pase QA en otra sesión si toca lógica. |
+| Mediano | Directo y un QA si es un área contenida; coordinado (juniors en paralelo, unos 4 por tanda y modelo, cada uno en su worktree, y un QA) si tiene tres o más partes independientes o mucho trabajo mecánico. |
 | Riesgoso (seguridad, datos, concurrencia, arquitectura) | Senior para el diseño y los casos de aceptación, juniors para escribirlo, QA de otra familia que compruebe también si las pruebas cubren esos casos. |
 
-## Por defecto, la frontera no escribe código
+## En un Run coordinado, la frontera no escribe código
 
-Por defecto, la frontera no escribe código; el usuario puede indicar otra cosa.
+En un Run coordinado, la frontera no escribe código; el usuario puede indicar otra cosa.
 El Elefante y toda sesión cara (Opus, Codex en esfuerzo alto u otro modelo de
 frontera) orquestan, planean, escriben encargos y revisan. Todo el código,
 incluidas las pruebas y las ediciones triviales, lo escriben Goldfish económicos,
@@ -60,10 +59,17 @@ presupuesto sin mejorar el resultado. Segundo, el rol: quien escribe tiende a
 defender lo que escribió; separar la escritura de la aceptación mantiene la
 revisión honesta y permite repetir el trabajo barato sin repetir el caro.
 
-Si algo es difícil, por defecto la frontera no lo escribe: describe la interfaz, los casos
+Si algo es difícil, la frontera describe la interfaz, los casos
 con entrada y resultado esperado, los pasos y el archivo y el símbolo que hay que
 cambiar, y un junior lo escribe. Resolver un conflicto al integrar también es
 escribir código: va a un junior con su propio encargo.
+
+Con el mismo modelo fuerte en el chat, coordinar las tareas chica y mediana
+usó 2,8 y 1,6 veces los tokens de salida del modelo caro y tardó 1,8 y 2,8
+veces más, respectivamente, sin una mejora concluyente de calidad. En
+encargos así, el chat trabaja directo y suma un QA barato si el cambio toca
+lógica.
+[A/B justo](evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca)
 
 ## Escalera de modelos
 

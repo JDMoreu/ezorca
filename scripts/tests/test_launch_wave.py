@@ -27,6 +27,7 @@ def worker(name: str, **extra: object) -> dict[str, object]:
         "effort": None,
         "base_branch": None,
         "worktree_name": None,
+        "repo": None,
     }
     data.update(extra)
     return data
@@ -315,6 +316,183 @@ class LaunchWaveTests(unittest.TestCase):
         )
         code, _, _ = self.run_main([str(wave)], lambda args: (0, "{}", ""))
         self.assertEqual(code, 2)
+
+    def test_argv_new_top_level(self) -> None:
+        wave = self.write(
+            {
+                "run": "run_5",
+                "cap_per_model": 1,
+                "workers": [
+                    worker(
+                        "t1",
+                        worktree="new-top-level",
+                        repo="id:06de043a",
+                        worktree_name="ab-t1",
+                        base_branch="main",
+                    )
+                ],
+            },
+            "wave.json",
+        )
+        calls: list[list[str]] = []
+
+        def fake(args: list[str]) -> tuple[int, str, str]:
+            calls.append(args)
+            return 0, "{}", ""
+
+        self.run_main([str(wave)], fake)
+        self.assertEqual(
+            calls[0],
+            [
+                "orca",
+                "orchestration",
+                "worker-start",
+                "--environment",
+                "local",
+                "--run",
+                "run_5",
+                "--spec-file",
+                "ab/t1.md",
+                "--task-title",
+                "AB t1",
+                "--worktree",
+                "new-top-level",
+                "--agent",
+                "opencode",
+                "--json",
+                "--repo",
+                "id:06de043a",
+                "--name",
+                "ab-t1",
+                "--setup",
+                "skip",
+                "--base-branch",
+                "main",
+            ],
+        )
+
+    def test_new_top_level_without_base_branch(self) -> None:
+        wave = self.write(
+            {
+                "run": "run_5",
+                "cap_per_model": 1,
+                "workers": [
+                    worker(
+                        "t1",
+                        worktree="new-top-level",
+                        repo="id:06de043a",
+                        worktree_name="ab-t1",
+                    )
+                ],
+            },
+            "wave.json",
+        )
+        calls: list[list[str]] = []
+
+        def fake(args: list[str]) -> tuple[int, str, str]:
+            calls.append(args)
+            return 0, "{}", ""
+
+        self.run_main([str(wave)], fake)
+        self.assertEqual(
+            calls[0][-6:],
+            ["--repo", "id:06de043a", "--name", "ab-t1", "--setup", "skip"],
+        )
+        self.assertNotIn("--base-branch", calls[0])
+
+    def test_new_top_level_requires_repo(self) -> None:
+        wave = self.write(
+            {
+                "run": "run_5",
+                "cap_per_model": 2,
+                "workers": [
+                    worker("ok"),
+                    worker("t1", worktree="new-top-level", worktree_name="ab-t1"),
+                ],
+            },
+            "wave.json",
+        )
+        fake = mock.Mock(return_value=(0, "{}", ""))
+        code, out, _ = self.run_main([str(wave)], fake)
+        self.assertEqual(code, 2)
+        self.assertIn("repo", json.loads(out)["error"])
+        fake.assert_not_called()
+
+    def test_new_top_level_requires_worktree_name(self) -> None:
+        wave = self.write(
+            {
+                "run": "run_5",
+                "cap_per_model": 1,
+                "workers": [worker("t1", worktree="new-top-level", repo="id:06de043a")],
+            },
+            "wave.json",
+        )
+        fake = mock.Mock(return_value=(0, "{}", ""))
+        code, out, _ = self.run_main([str(wave)], fake)
+        self.assertEqual(code, 2)
+        self.assertIn("worktree_name", json.loads(out)["error"])
+        fake.assert_not_called()
+
+    def test_repo_rejected_with_current(self) -> None:
+        wave = self.write(
+            {
+                "run": "run_5",
+                "cap_per_model": 1,
+                "workers": [worker("t1", repo="id:06de043a")],
+            },
+            "wave.json",
+        )
+        fake = mock.Mock(return_value=(0, "{}", ""))
+        code, out, _ = self.run_main([str(wave)], fake)
+        self.assertEqual(code, 2)
+        self.assertIn("repo", json.loads(out)["error"])
+        fake.assert_not_called()
+
+    def test_new_top_level_rejects_whitespace_only_required_fields(self) -> None:
+        for field in ("repo", "worktree_name"):
+            with self.subTest(field=field):
+                fields = {"repo": "id:06de043a", "worktree_name": "ab-t1"}
+                fields[field] = " \t "
+                wave = self.write(
+                    {
+                        "run": "run_5",
+                        "cap_per_model": 2,
+                        "workers": [
+                            worker("ok"),
+                            worker("t1", worktree="new-top-level", **fields),
+                        ],
+                    },
+                    "wave.json",
+                )
+                fake = mock.Mock(return_value=(0, "{}", ""))
+                code, out, _ = self.run_main([str(wave)], fake)
+                self.assertEqual(code, 2)
+                self.assertIn(field, json.loads(out)["error"])
+                fake.assert_not_called()
+
+    def test_dry_run_new_top_level_includes_repo(self) -> None:
+        wave = self.write(
+            {
+                "run": "run_5",
+                "cap_per_model": 1,
+                "workers": [
+                    worker(
+                        "t1",
+                        worktree="new-top-level",
+                        repo="id:06de043a",
+                        worktree_name="ab-t1",
+                    )
+                ],
+            },
+            "wave.json",
+        )
+        fake = mock.Mock(return_value=(0, "{}", ""))
+        code, out, _ = self.run_main([str(wave), "--dry-run"], fake)
+        commands = json.loads(out)["commands"]
+        self.assertEqual(code, 0)
+        fake.assert_not_called()
+        index = commands[0].index("--repo")
+        self.assertEqual(commands[0][index + 1], "id:06de043a")
 
 
 if __name__ == "__main__":

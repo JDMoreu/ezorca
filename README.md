@@ -1,20 +1,21 @@
 # EzOrca
 
-Skill para coordinar equipos de agentes de código en Orca: la frontera orquesta, los modelos económicos escriben el código.
+Skill para resolver tareas de código directamente en el chat o coordinar equipos de agentes en Orca.
 
 ## Qué es y para quién
 
-EzOrca toma un encargo escrito en palabras y lo convierte en un Run de Orca con varios agentes: uno caro que razona el plan, escribe los encargos, integra y acepta; y varios económicos, gratis o locales que escriben todo el código y las pruebas. La meta es un resultado de nivel frontera con la mitad del costo o menos (meta de diseño; la primera medición real está en docs/evaluation.md: en una tarea chica un solo modelo medio fue más barato, y EzOrca dio más calidad).
+EzOrca decide primero entre trabajar directo en el chat o coordinar un Run de Orca. En un Run, un modelo caro planea, escribe los encargos, integra y acepta. Los modelos económicos, gratis o locales escriben el código y las pruebas. La meta de diseño era un resultado de nivel frontera con la mitad del costo o menos. EzOrca ahora elige el modo antes de planear porque, en el A/B justo, coordinar las tareas chica y mediana costó más sin una mejora concluyente de calidad. [Evaluación](docs/evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca)
 
 Es para quien ya usa Orca con uno o más agentes de código (Claude Code, Codex, OpenCode u otro que Orca liste) y quiere delegar trabajo real sin pagar modelos caros por escribir líneas. También sirve para comparar dos versiones de una skill con evidencia, en vez de a ojo.
 
 ## Ideas clave
 
-- **Elefante y Goldfish, por ejemplo.** El Elefante suele ser el modelo de tu chat: piensa, planifica, reparte, revisa y acepta. Los Goldfish son los modelos económicos que ejecutan. Por defecto la frontera no escribe código, ni las pruebas, ni las ediciones triviales; el usuario puede indicar otra cosa.
-- **Papeles adaptativos.** Elefante/PM, senior, junior y QA son ejemplos, no una lista fija: cada Run define los papeles que la tarea necesite (investigador, diseñador, arquitecto, revisor de seguridad, tester, documentador, integrador…) y cualquier agente o modelo puede ocupar cualquiera según capacidad, costo y disponibilidad. Una tarea pequeña puede llevar un solo junior; algo riesgoso suma diseño senior y un QA de otra familia. Los modelos caros razonan y casi nunca escriben código, salvo que el usuario diga otra cosa.
+- **Elefante y Goldfish, por ejemplo.** El Elefante suele ser el modelo de tu chat: piensa, planifica, reparte, revisa y acepta. Los Goldfish son los modelos económicos que ejecutan. En un Run coordinado la frontera no escribe código, ni las pruebas, ni las ediciones triviales; el usuario puede indicar otra cosa.
+- **Directo o coordinado.** Antes de planear, EzOrca anuncia el modo y el motivo en una línea. Por defecto, el modelo del chat hace las tareas chicas y medianas y, si tocan lógica, suma un QA barato en otra sesión.
+- **Papeles adaptativos.** Cada Run coordinado define los papeles según el encargo y los asigna por capacidad, costo y disponibilidad. Por ejemplo, un cambio riesgoso puede sumar diseño senior y un QA de otra familia.
 - **Escalera de modelos.** Económico o gratis → económico capaz → modelo medio → y como último recurso la frontera describe la solución para que la escriba un modelo barato. Dos fallos en la misma tarea obligan a subir un escalón.
 - **Avisa y sigue.** Al escalar o reasignar, el coordinador avisa en una línea qué cambia, por qué y cuánto cuesta. Pregunta solo si abriría una sesión de frontera nueva o si se supera el presupuesto acordado.
-- **Dos modalidades.** Entrega normal: comprobaciones habituales y un pase de revisión independiente en una sesión distinta. Entrega verificada: dos pases ciegos consecutivos sobre una versión con huella.
+- **Dos modalidades en Runs coordinados.** La entrega normal incluye las comprobaciones habituales y, para cambios no triviales, un pase de revisión en otra sesión. La entrega verificada exige dos pases ciegos consecutivos sobre una versión con huella.
 - **Reglas en código.** Los scripts (descubrimiento de agentes, validación de encargos, arranque de tandas, huella de versión, puerta de alcance, evaluación) hacen mecánicamente lo que la prosa no garantiza.
 
 ## Requisitos
@@ -39,13 +40,13 @@ En un chat de Orca que ya pueda coordinar:
 Usa EzOrca para agregar caché de respuestas a la CLI de notas y que la segunda consulta no vuelva a la red.
 ```
 
-Puedes añadir «entrega normal» (predeterminada) o «entrega verificada». El coordinador elige agentes, modelos y papeles, arranca a los ejecutores en paralelo, integra y te informa por tarea. Más ejemplos en [docs/usage.md](docs/usage.md).
+Si el encargo amerita coordinar, el chat elige los agentes, modelos y papeles, reparte el trabajo e integra los resultados. Pedir «entrega verificada» o dos pases ciegos activa un Run coordinado, incluso en tareas chicas. Más ejemplos en [docs/usage.md](docs/usage.md).
 
 ## Resultados
 
 - En 9 simulacros con 45 criterios fijos, la versión candidata medida obtuvo 39/45 frente a 21–23/45 de la versión anterior, con 1 repetición y jueces LLM ciegos. La versión publicada incluye ediciones posteriores (correcciones de texto, scripts y papeles adaptativos) que no se volvieron a medir completas; método y límites en [docs/evaluation.md](docs/evaluation.md).
 - En dos tareas reales de un proyecto Rust privado, el equipo económico igualó y superó la solución de referencia según una revisión ciega; ninguna sesión de frontera escribió código.
-- Son señales, no garantías: hay una sola repetición por caso y el juicio lo hace un modelo. Método y límites en [docs/evaluation.md](docs/evaluation.md).
+- En el A/B justo (2 tareas × 2 brazos × 2 repeticiones, con el mismo modelo fuerte en el chat), coordinar las tareas chica y mediana usó 2,8 y 1,6 veces los tokens de salida del modelo caro y tardó 1,8 y 2,8 veces más, respectivamente, sin una mejora concluyente de calidad. [Evaluación](docs/evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca)
 
 ![A/B real: calidad y tokens](docs/img/ab-results.svg)
 
@@ -75,10 +76,10 @@ MIT. Ver [LICENSE](LICENSE).
 
 ## English summary
 
-EzOrca is a skill for coordinating teams of coding agents in Orca: an expensive front-tier model plans, writes the task briefs, integrates and accepts, while cheap, free or local models write all the code and tests.
+EzOrca is an Orca skill that first decides whether the chat should do the work directly or coordinate a team of coding agents. Small and medium tasks default to direct work because coordination used more frontier-model output tokens without a conclusive improvement in quality in the fair A/B test. [Evaluation](docs/evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca)
 
 - Picks roles by risk and cost, and escalates by evidence instead of impatience.
-- Supports normal and verified delivery; by default the front tier does not write code, and the user can say otherwise.
+- Supports normal and verified delivery in coordinated runs. The frontier model plans and reviews, while cheaper models write the code and tests unless the user asks otherwise.
 - Discovers installed agents and models on every run instead of hardcoding a list.
 - Ships small Python 3.11+ scripts for agent discovery, spec checks, wave launching, version fingerprints, scope gates and skill evaluation.
 
