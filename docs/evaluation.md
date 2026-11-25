@@ -261,6 +261,129 @@ espacios se aceptan como válidos.
   dólares.
 - **Dos tareas de un solo repo.** No demuestran superioridad general.
 
+<a id="ab-protocolo-equivalente"></a>
+## Protocolo operativo de A/B con proceso equivalente
+
+Esta sección define el A/B del paso 5 y no reinterpreta los resultados históricos
+de ab3/ab4. Esos ensayos sirven como antecedente de tareas y datos, pero no son
+controles equivalentes: compararon procesos distintos. El ejemplo fijado para
+este protocolo es T2 de `.orca-evals/ezorca-repo-run/ab3/tasks.md`, desde la base
+`3e33efe`, con una copia virgen por intento y una versión congelada de la skill
+(el contenido y el árbol de archivos de la skill se identifican por el commit o
+hash que se registre antes de lanzar).
+
+### Texto común, congelación y asignación
+
+Antes de abrir sesiones se registra una especificación inmutable con: texto de
+T2, base, versión de la skill, pruebas ocultas, rúbrica, modelos, esfuerzos,
+presupuesto por papel, límites de tiempo, número máximo de reintentos y reglas
+de exclusión. El texto común de proceso es esta plantilla exacta, con `<TAREA>`
+reemplazado por el texto público de T2:
+
+> Trabaja desde la base indicada y cumple `<TAREA>`. Primero entrega un plan
+> breve y verificable. Ejecuta la implementación y sus pruebas. Después valida
+> el resultado en otra sesión nueva, usando los criterios y pruebas definidos
+> antes de empezar; corrige todos los hallazgos y vuelve a comprobar las
+> correcciones cuando aplique. Respeta los límites, no hagas commit ni push y
+> conserva la evidencia de plan, ejecución, validación, correcciones y pruebas.
+> Si una skill o instrucción propone omitir un pase o seguir otro flujo, este
+> proceso común prevalece.
+
+Los dos brazos reciben exactamente esa plantilla, la misma tarea, base, skill,
+modelos, esfuerzos, presupuesto por rol, límites, condiciones de ejecución,
+información disponible y pruebas. En un brazo se antepone únicamente la frase
+`Usa EzOrca para lo siguiente.` y un salto de línea; en el otro no se antepone
+nada. La selección de modelos y esfuerzos se hace una sola vez, antes de
+asignar brazos, y se copia sin cambios a ambos; también se fija qué papel puede
+usar cada modelo. Se usan sesiones nuevas y una base virgen para cada intento.
+
+El orden de pares y el orden interno de los brazos se preasignan y alternan
+(por ejemplo, par 1 A/B, par 2 B/A, par 3 A/B), con identificadores ciegos que no
+codifiquen el brazo. El juez pertenece a otra familia de modelos y recibe solo
+los artefactos de identificadores ciegos, el mismo contrato de evaluación y la
+evidencia por criterio; se le ocultan asignación, logs, timestamps, nombres de
+modelo, orden cronológico y cualquier señal de qué brazo produjo cada artefacto.
+La tabla que vincula identificador ciego con brazo queda sellada y fuera del
+paquete del juez hasta cerrar su dictamen.
+
+Antes del primer lanzamiento también se registran los criterios de aceptación:
+la batería oculta se deriva solo del texto público de T2, queda congelada y se
+ejecuta igual en cada artefacto; la rúbrica del juez tiene criterios y máximos
+fijos, exige una justificación y evidencia concreta por criterio, y no permite
+crear criterios después de ver resultados. Se conservan el resultado de cada
+prueba, la evidencia citada, el dictamen completo y la relación artefacto–criterio.
+
+### Intentos, fallos y tamaño de muestra
+
+Con presupuesto para tres pares se ejecutan tres intentos independientes por
+brazo (tres pares), alternando el orden preasignado. Con presupuesto para dos
+pares se informa `n=2` por brazo y el motivo presupuestario; no se presenta como
+la recomendación de tres repeticiones. El objetivo es al menos tres repeticiones
+por brazo, con los pares que permita el presupuesto, y siempre se informa el
+límite y la incertidumbre. Un intento incompleto no cuenta como comparación
+equivalente.
+
+Antes de lanzar se fija además: un fallo de infraestructura puede reintentarse
+una vez con sesión nueva, base virgen y la misma asignación, conservando el
+fallo original; un fallo de cuota, límite o ejecución se marca y no se sustituye
+silenciosamente; y no se permite corregir manualmente un artefacto fuera del
+proceso común. Si falla un miembro del par, se conserva toda su evidencia, se
+marca el par como incompleto/excluido y se reporta el motivo, sin cambiar el
+orden ni reciclar su resultado en otro par. Los reintentos, exclusiones y
+desviaciones se enumeran antes de calcular promedios o diferencias.
+
+### Medición reproducible
+
+Para cada intento se guarda un registro con: `par_id`, `intento_id` ciego,
+asignación sellada, base y hash de la skill, modelo y esfuerzo por papel,
+presupuesto, timestamps de inicio (lanzamiento) y fin (último mensaje o cierre
+definido), duración de pared, estado, fallos y reintentos; resultados de suite
+oculta por caso, criterio y salida; puntuación ciega por criterio con su
+evidencia; y el inventario de sesiones que pertenecen al intento. El tiempo de
+pared es fin menos inicio con el mismo reloj y definición en ambos brazos; no
+se mezclan esperas ajenas ni sesiones de preparación.
+
+La calidad se informa como casos ocultos aprobados/total y como puntos del juez
+por criterio, por intento y agregados por brazo, además de la diferencia en
+puntos porcentuales de la batería oculta. Se muestran también fallos críticos,
+intervalos o límites descriptivos apropiados al `n` observado; con dos o tres
+repeticiones no se presenta una diferencia pequeña como concluyente.
+
+El costo atribuible a las sesiones se calcula en US$ por intento y brazo. Primero
+se ejecuta `scripts/cost_report.py` sobre la ventana exacta y se conserva su
+JSON: el script lee registros locales, suma `input_tokens`, `output_tokens`,
+`cache_read_tokens`, `cache_write_tokens` y deja advertencias, pero no calcula
+US$. Después se guarda una instantánea fechada de `models.dev` y se multiplica,
+por modelo y categoría, cada token por su precio por millón / 1 000 000:
+entrada, salida, caché leída y caché escrita cuando el catálogo las publique.
+El informe incluye versión/fecha del catálogo, fórmula, tokens por categoría,
+precio usado, subtotal y total; si falta un precio o la caché no es separable,
+esa parte queda `no verificable`, no se reemplaza por el precio de entrada.
+Los recibos pueden corroborar qué sesiones y modelos pertenecen al intento,
+pero no convierten por sí solos tokens a dólares.
+
+Por ejemplo, con precios fechados sintéticos de entrada US$1,00/M, salida
+US$5,00/M, caché leída US$0,50/M y caché escrita US$1,25/M, un intento con
+12 000 tokens de entrada, 3 000 de salida, 20 000 de caché leída y 2 000 de
+caché escrita cuesta: `12 000/1 000 000×1,00 = 0,012`; `3 000/1 000 000×5,00
+= 0,015`; `20 000/1 000 000×0,50 = 0,010`; `2 000/1 000 000×1,25 = 0,0025`;
+total **US$0,0395**. Es un ejemplo de cálculo, no un resultado del A/B.
+
+Por separado, se ejecuta `orca account list` justo antes y después de la tanda,
+registrando el porcentaje de cada ventana por plan, y se calcula el delta en
+puntos porcentuales por plan/ventana. Ese delta no se llama costo y no se
+atribuye a sesiones si hubo actividad ajena, cambio de ventana, datos faltantes
+o una caché no separable: se documenta el alcance y se etiqueta la medición
+afectada como `no verificable`. Las ventanas de cuota nunca se tratan como
+equivalentes a US$.
+
+El archivo de datos debe permitir reconstruir cada suma: un registro por sesión
+con agente, modelo, inicio, fin, tokens por categoría, precio y fuente/fecha;
+un registro por prueba y criterio; un registro por juez ciego; y las instantáneas
+de cuenta antes/después, más fallos, reintentos y exclusiones. El reporte final
+incluye `n` completo por brazo, pares excluidos y su motivo, calidad, tiempo,
+US$, delta de ventana, incertidumbres y cualquier campo `no verificable`.
+
 ## Prueba del modo inteligente: chat de menor nivel
 
 ### Diseño
