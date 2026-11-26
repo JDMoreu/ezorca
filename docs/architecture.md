@@ -2,7 +2,7 @@
 
 EzOrca elige el modo antes de planear. El chat puede implementar, delegar a un
 ejecutor con validador o coordinar un Run completo.
-[Modo inteligente](../SKILL.md#modo-inteligente-la-opción-más-barata-que-cumpla)
+[Modo inteligente](../SKILL.md#modo-inteligente-la-mejor-calidad-dentro-del-presupuesto)
 
 ## Elefante y Goldfish
 
@@ -22,26 +22,30 @@ Los papeles son **adaptativos y abiertos**: Elefante, senior, junior y QA son
 ejemplos, no una lista fija. Cada Run define los que la tarea necesite —por
 ejemplo, investigador, diseñador, arquitecto, revisor de seguridad, tester,
 documentador o integrador—, y cualquier agente o modelo puede ocupar cualquiera
-de ellos según su capacidad, su costo y su disponibilidad. La política de costo
-por defecto se mantiene en un Run coordinado: los modelos caros se usan para
-razonar y casi nunca escriben código, salvo que el usuario diga otra cosa.
+de ellos según su capacidad, su disponibilidad y su costo, en ese orden. La
+política por defecto se mantiene en un Run coordinado: los modelos de frontera
+planifican y validan, y casi nunca escriben código, salvo que el usuario diga
+otra cosa.
 
 Papeles habituales, como ejemplo:
 
 | Papel | Quién | Hace | No hace |
 |---|---|---|---|
 | Elefante (PM) | El modelo de este chat | Estrategia, plan, registro, encargos, decisiones, integración y aceptación | Escribir código ni pruebas, ni siquiera ediciones triviales |
-| Senior | Modelo caro o de esfuerzo alto | Diseño difícil, casos de aceptación de riesgo, revisión de riesgo, describir la solución | Escribir código; trabajo repetitivo o ya bien definido |
+| Senior | Modelo de frontera o de esfuerzo alto | Diseño difícil, casos de aceptación de riesgo, validación, describir la solución | Escribir código; trabajo repetitivo o ya bien definido |
 | Ejecutor | Modelo de nivel medio o inferior | Todo el código y las pruebas, con un encargo detallado | Decisiones de diseño abiertas |
 | QA | Otra familia de agente, o sesión nueva y ciega | Revisar el resultado contra los criterios, sin ver el razonamiento del implementador | Corregir lo que revisa |
 
 Antes de planear, el Elefante estima tamaño, partes independientes y riesgo.
-`choose_mode.py` aplica los requisitos, estima el costo de cada opción y elige
-la más barata que cumple. Con todos los niveles disponibles y riesgo bajo:
+`choose_mode.py` elige por calidad, luego eficiencia y luego costo: delegar es lo
+normal en todo lo no trivial; directo queda para lo trivial o a pedido; el
+coordinado, para varias partes, tamaño grande, riesgo alto o entrega verificada.
+El costo se estima solo para informar y desempatar. Con todos los niveles
+disponibles:
 
-- `--chat-tier frontera --size mediana` → directo, con costo 43 frente a 76 en los otros modos.
-- `--chat-tier economico --size mediana` → delegado, con costo 18,4. Empata con el Run coordinado y gana por requerir menos sesiones.
-- `--chat-tier economico --size grande --parts 4` → coordinado, con costo 76,8 y un planificador de frontera. Con `ask_user: true`, el chat pregunta antes de abrir la sesión.
+- `--chat-tier frontera --size mediana` → delegado: planifica el propio chat (frontera), escribe un ejecutor medio con esfuerzo alto y valida frontera en otra sesión, con un pase. Costo estimado 113.
+- `--chat-tier economico --size chica` → delegado: sin planificador (planifica el chat), ejecutor económico capaz (o medio si no hay cuota) y validador de frontera. Costo estimado 21,6 con chat económico.
+- `--chat-tier economico --size grande --parts 4 --risk alto` → coordinado: planificador de frontera, cuatro ejecutores medios y validador de frontera con dos pases. Con `ask_user: true`, el chat pregunta antes de abrir la sesión de frontera, salvo que el usuario ya la autorizó (`--frontier-ok`).
 
 ## Límite del nivel del ejecutor
 
@@ -50,11 +54,11 @@ En los modos delegado y coordinado, el ejecutor llega como máximo al nivel
 y describe la solución y un ejecutor de nivel medio escribe el código y las
 pruebas.
 
-El motivo es doble. Primero, el costo: los tokens de frontera son el recurso
-escaso, y escribir boilerplate con ellos es la forma más rápida de gastar el
-presupuesto sin mejorar el resultado. Segundo, el rol: quien escribe tiende a
-defender lo que escribió; separar la escritura de la aceptación mantiene la
-revisión honesta y permite repetir el trabajo barato sin repetir el caro.
+El motivo es doble. Primero, la calidad: quien escribe tiende a defender lo que
+escribió; separar la escritura de la validación mantiene la revisión honesta, y
+la frontera se reserva para planificar y validar, donde más aporta. Segundo, la
+eficiencia: los ejecutores medios trabajan en paralelo y se puede repetir su
+trabajo sin repetir el de la frontera, siempre dentro de los topes de cada plan.
 
 Si algo es difícil, la frontera describe la interfaz, los casos
 con entrada y resultado esperado, los pasos y el archivo y el símbolo que hay que
@@ -63,8 +67,9 @@ un ejecutor.
 
 Con el mismo modelo fuerte en el chat, coordinar las tareas chica y mediana
 usó 2,8 y 1,6 veces los tokens de salida del modelo caro y tardó 1,8 y 2,8
-veces más, respectivamente, sin una mejora concluyente de calidad. El selector
-usa estas cifras para estimar el costo de coordinar.
+veces más, respectivamente, sin una mejora concluyente de calidad. Esas cifras
+se reportan con honestidad; el selector las usa solo para informar el costo, no
+para decidir el modo.
 [A/B justo](evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca)
 
 ## Escalera de modelos
@@ -81,7 +86,7 @@ existan se saltan.
   registro del Run con su motivo.
 - **Avisa y sigue.** Al escalar o reasignar, avisa en una línea qué cambia, por
   qué y cuánto sube el costo, y continúa. Se pregunta antes solo si se abriría
-  una sesión de frontera nueva (Opus, Codex en esfuerzo alto) o si se superaría
+  una sesión de frontera no autorizada (Opus, Codex en esfuerzo alto) o si se superaría
   el presupuesto acordado. Si el último escalón falla, se pausa esa tarea y se
   informa con evidencia.
 - **Caída o falta de cuota.** Si un worker se cae o se queda sin cuota, se
@@ -98,8 +103,8 @@ existan se saltan.
 1. **Descubrir.** Una vez por Run: agentes instalados, modelos disponibles y qué
    admite `worker-start`. El resultado se clasifica por escalón.
 2. **Plan por papel.** Una línea por papel: papel, agente y modelo de `pick`, nivel
-   de costo y motivo. Elige el más barato del nivel pedido o superior; cierra con
-   las sesiones previstas por nivel.
+   de costo y motivo. Elige un candidato de `pick` en el nivel que pide `roles`;
+   cierra con las sesiones previstas por nivel.
 3. **Encargos validados.** Cada encargo en un archivo, con alcance cerrado,
    ejemplo y comprobaciones. Se validan antes de lanzar.
 4. **Tanda.** Los workers arrancan en paralelo, con tope por modelo y recibos
@@ -119,15 +124,15 @@ existan se saltan.
 | | Entrega normal | Entrega verificada |
 |---|---|---|
 | Cuándo | Es la predeterminada, también con «sin verificación» | El usuario la pide o el ciclo exige verificación independiente |
-| Revisión | **Un pase QA único** en una sesión distinta de la del implementador para cambios no triviales | **Dos pases** en sesiones nuevas y ciegas, de otra familia si hay, incluso para cambios triviales |
+| Revisión | Un pase QA en una sesión distinta de la del implementador para cambios no triviales, con revalidación tras cada corrección | **Dos pases** en sesiones nuevas y ciegas, de otra familia si hay, incluso para cambios triviales |
 | Versión | No se fija | Se fija con un commit o una **huella** del conjunto verificable completo |
-| Cierre | Un pase; otra sesión solo si la corrección cambia el diseño | **Dos pases limpios consecutivos** sobre la misma huella |
+| Cierre | Sin hallazgos bloqueantes ni mayores (máx. 3 rondas; después, pausa e informa) | **Dos pases limpios consecutivos** sobre la misma huella |
 
 En la entrega normal, correr las pruebas no la convierte en verificada, y la
 lectura del Elefante no sustituye al QA. Si el QA dio hallazgos bloqueantes o
-mayores, el implementador corrige y el Elefante comprueba la corrección con su
-evidencia; solo hay otra sesión QA si la corrección cambia el diseño o toca
-archivos nuevos. Un cambio trivial no lleva QA.
+mayores, el implementador corrige y el validador revalida tras cada corrección,
+hasta que no queden hallazgos bloqueantes ni mayores (máx. 3 rondas); después,
+pausa e informa. Un cambio trivial no lleva QA, salvo con riesgo alto (un validador).
 
 En la entrega verificada, el veredicto empieza con la versión verificada en la
 primera línea; sin esa línea es inválido. La huella cubre el contenido, no la
@@ -150,7 +155,7 @@ registro, luego la memoria.
 
 Este documento y la skill explican el criterio: cuándo subir un escalón, qué
 papel armar, cómo redactar un encargo, qué aceptar. Los scripts hacen lo
-mecánico: estimar el costo de cada modo y elegir el más barato que cumple,
+mecánico: elegir el modo y los niveles por calidad (informando el costo),
 comprobar que un encargo está completo, repartir el cupo de una tanda,
 medir una huella, detectar un worker colgado, verificar el alcance de un cambio.
 

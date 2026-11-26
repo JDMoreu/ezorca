@@ -31,6 +31,8 @@ Entrada `x` y salida `y`.
 ## Límites del proyecto
 Sin dependencias nuevas.
 
+No edites pruebas ni relajes pruebas existentes para que algo pase.
+
 Cierra con worker_done.
 """
 
@@ -67,6 +69,10 @@ Cierra con worker_done.
 """
 
 
+SIN_REGLA_PRUEBAS = "sin regla: no debilitar pruebas"
+SIN_REVISION_PRUEBAS = "sin comprobación: pruebas debilitadas"
+
+
 def run_main(argv: list[str]) -> tuple[int, str, str]:
     """Ejecuta check_spec.main capturando salida y error."""
     out, err = io.StringIO(), io.StringIO()
@@ -95,7 +101,7 @@ class CheckSpecTest(unittest.TestCase):
         self.assertEqual(data["file"], str(path))
         self.assertFalse(data["ok"])
         self.assertEqual(data["missing"], ["Ejemplo", "Límites del proyecto"])
-        self.assertEqual(data["warnings"], [])
+        self.assertEqual(data["warnings"], [SIN_REGLA_PRUEBAS])
 
     def test_implementacion_completa(self) -> None:
         path = self.spec("completa.md", SPEC_COMPLETA)
@@ -141,6 +147,69 @@ class CheckSpecTest(unittest.TestCase):
         data = json.loads(out)[0]
         self.assertTrue(data["ok"])
         self.assertEqual(data["warnings"], ["coletilla: No delegues"])
+
+    def test_implementacion_sin_regla_de_pruebas_avisa(self) -> None:
+        sin_regla = SPEC_COMPLETA.replace(
+            "No edites pruebas ni relajes pruebas existentes para que algo pase.\n", ""
+        )
+        path = self.spec("sin-regla.md", sin_regla)
+        code, out, _ = run_main([str(path)])
+
+        self.assertEqual(code, 0)
+        data = json.loads(out)[0]
+        self.assertTrue(data["ok"])
+        self.assertEqual(data["missing"], [])
+        self.assertEqual(data["warnings"], [SIN_REGLA_PRUEBAS])
+
+    def test_implementacion_con_regla_no_avisa(self) -> None:
+        for frase in ("No relajes pruebas.", "Ninguna prueba se debilitó."):
+            with self.subTest(frase=frase):
+                sin_regla = SPEC_COMPLETA.replace(
+                    "No edites pruebas ni relajes pruebas existentes para que algo pase.",
+                    frase,
+                )
+                path = self.spec("con-regla.md", sin_regla)
+                _, out, _ = run_main([str(path)])
+
+                self.assertEqual(json.loads(out)[0]["warnings"], [])
+
+    def test_revision_sin_comprobacion_de_pruebas_avisa(self) -> None:
+        path = self.spec("revision-ok.md", SPEC_REVISION_OK)
+        code, out, _ = run_main(["--kind", "revision", str(path)])
+
+        self.assertEqual(code, 0)
+        self.assertEqual(json.loads(out)[0]["warnings"], [SIN_REVISION_PRUEBAS])
+
+        con = SPEC_REVISION_OK.replace(
+            "Un veredicto.", "Un veredicto. Ninguna prueba existente se debilitó."
+        )
+        path = self.spec("revision-con.md", con)
+        _, out, _ = run_main(["--kind", "revision", str(path)])
+
+        self.assertEqual(json.loads(out)[0]["warnings"], [])
+
+    def test_revision_aviso_exige_frase_dentro_de_la_seccion(self) -> None:
+        casos = {
+            "fuera de la sección": SPEC_REVISION_OK + "\nSe debilitó una prueba.\n",
+            "palabra suelta": SPEC_REVISION_OK.replace(
+                "Un veredicto.", "Un veredicto; no debilites el análisis."
+            ),
+        }
+        for nombre, texto in casos.items():
+            with self.subTest(caso=nombre):
+                path = self.spec("revision-falsa.md", texto)
+                _, out, _ = run_main(["--kind", "revision", str(path)])
+
+                self.assertEqual(
+                    json.loads(out)[0]["warnings"], [SIN_REVISION_PRUEBAS]
+                )
+        for frase in ("pruebas debilitadas", "debilitar pruebas", "relajes pruebas"):
+            with self.subTest(frase=frase):
+                texto = SPEC_REVISION_OK.replace("Un veredicto.", f"1. Sin {frase}.")
+                path = self.spec("revision-frase.md", texto)
+                _, out, _ = run_main(["--kind", "revision", str(path)])
+
+                self.assertEqual(json.loads(out)[0]["warnings"], [])
 
     def test_archivo_inexistente_devuelve_2(self) -> None:
         missing = self.dir / "no-existe.md"

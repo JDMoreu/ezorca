@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Elige el modo de trabajo factible de menor costo relativo."""
+"""Elige el modo de trabajo de mayor calidad factible (luego eficiencia y costo)."""
 
 from __future__ import annotations
 
@@ -13,14 +13,16 @@ else:
     from discover import use_utf8_stdout
 
 
-# Estimaciones relativas calibradas con el A/B justo de docs/evaluation.md.
+# El costo solo informa y desempata; estimaciones relativas del A/B justo (docs/evaluation.md).
 W_TIER = {"gratis": 0.2, "economico": 1, "economico-capaz": 2, "medio": 4, "frontera": 10}
 WORK = {"trivial": 1, "chica": 2, "mediana": 4, "grande": 10}
 FLOOR = {"trivial": "gratis", "chica": "economico", "mediana": "economico-capaz", "grande": "medio"}
 OVERHEAD = 1.0
 COORD_FIXED = 4.8
 COORD_RATE = 0.4
-EFFORT = {"trivial": "bajo", "chica": "bajo", "mediana": "medio", "grande": "alto"}
+EFFORT = {"trivial": "bajo", "chica": "medio", "mediana": "alto", "grande": "alto"}
+FAMILY = "distinta si hay; si no, sesión nueva ciega del mismo agente"
+LOOP = "corregir y revalidar hasta que no queden hallazgos bloqueantes ni mayores (máx. 3 rondas)"
 TIERS = tuple(W_TIER)
 MODES = ("directo", "delegado", "coordinado")
 
@@ -37,7 +39,7 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     """Lee y valida los niveles y las restricciones de la tarea."""
     parser = Parser(description=__doc__, allow_abbrev=False, usage=(
         "%(prog)s --chat-tier NIVEL --size {trivial,chica,mediana,grande} "
-        "[--parts N] [--risk {bajo,alto}] [--verified] [--chat-no-code] "
+        "[--parts N] [--risk {bajo,alto}] [--verified] [--chat-no-code] [--frontier-ok] "
         "[--available NIVEL[,NIVEL...]] [--prefer {auto,directo,delegado,coordinado}]"
     ))
     parser.add_argument("--chat-tier", required=True, metavar="NIVEL")
@@ -46,6 +48,7 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--risk", default="bajo", metavar="{bajo,alto}")
     parser.add_argument("--verified", action="store_true")
     parser.add_argument("--chat-no-code", action="store_true")
+    parser.add_argument("--frontier-ok", action="store_true")
     parser.add_argument("--available", default=",".join(TIERS), metavar="NIVEL[,NIVEL...]")
     parser.add_argument("--prefer", default="auto", metavar="{auto,directo,delegado,coordinado}")
     args = parser.parse_args(argv)
@@ -72,110 +75,112 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     return args
 
 
-def cheapest_tier(floor: str, available: set[str], ceiling: str = "frontera") -> str | None:
-    """Busca el nivel más barato con cuota entre el mínimo y el máximo."""
-    eligible = TIERS[TIERS.index(floor):TIERS.index(ceiling) + 1]
-    return next((tier for tier in eligible if tier in available), None)
+def highest(available: set[str]) -> str:
+    """Devuelve el nivel más alto con cuota."""
+    return max(available, key=TIERS.index)
 
 
-def validation(args: argparse.Namespace) -> tuple[list[dict], float, str]:
-    """Devuelve los pases de validación, su costo y cualquier impedimento."""
-    if args.size == "trivial" and not args.verified:
-        return [], 0, ""
-    high_risk = args.risk == "alto"
-    tier = cheapest_tier("frontera" if high_risk else "economico-capaz", args.available)
-    if tier is None:
-        return [], 0, "No hay cuota para el nivel de validación requerido."
-    passes = 2 if args.verified else 1
-    role = {"role": "validador", "tier": tier, "effort": "alto" if high_risk else "medio",
-            "family": "distinta si hay; si no, sesión nueva ciega del mismo agente"}
-    return [role.copy() for _ in range(passes)], passes * (W_TIER[tier] + OVERHEAD), ""
+def executor_tier(args: argparse.Namespace) -> str | None:
+    """Elige el nivel sobre el piso, con tope medio; sin él, el piso mismo."""
+    top = TIERS.index("medio")
+    floor = min(TIERS.index(FLOOR[args.size]) + (args.risk == "alto"), top)
+    for tier in TIERS[min(floor + 1, top):top + 1]:
+        if tier in args.available:
+            return tier
+    return TIERS[floor] if TIERS[floor] in args.available else None
 
 
-def evaluate(args: argparse.Namespace) -> tuple[dict, dict]:
-    """Calcula factibilidad, costos y roles para los tres modos."""
-    high_risk = args.risk == "alto"
-    minimum = TIERS.index(FLOOR[args.size])
-    floor = TIERS[min(minimum + high_risk, len(TIERS) - 1)]
-    executor_floor = TIERS[min(minimum + high_risk, TIERS.index("medio"))]
-    needs_planner = high_risk or args.size == "grande" or args.parts >= 3
-    executor = cheapest_tier(executor_floor, args.available, ceiling="medio")
-    validation_roles, validation_cost, validation_block = validation(args)
-    executor_roles = [{"role": "ejecutor", "tier": executor, "effort": EFFORT[args.size]}]
-    planner_roles = [{"role": "planificador", "tier": "frontera", "effort": "alto"}] if needs_planner else []
-
-    chat_weight = W_TIER[args.chat_tier]
-    work = WORK[args.size]
-    direct_cost = work * chat_weight + validation_cost
-    coord_cost = (COORD_FIXED + COORD_RATE * work) * chat_weight
-    common_cost = coord_cost + work * W_TIER.get(executor, 0) + validation_cost
-    planner_cost = 2 * W_TIER["frontera"] + OVERHEAD if needs_planner else 0
-
-    executor_block = f"No hay cuota para un ejecutor elegible con nivel mínimo {executor_floor}." if not executor else ""
-    run_block = ""
-    if args.verified:
-        run_block = "La entrega verificada requiere un Run coordinado."
-    elif needs_planner:
-        run_block = "La tarea requiere un planificador en un Run coordinado."
-
-    direct_block = run_block
-    if not direct_block and args.chat_no_code:
-        direct_block = "El chat tiene restringida la implementación."
-    if not direct_block and chat_weight < W_TIER[floor]:
-        direct_block = f"El chat requiere nivel {floor} o superior para implementar."
-    planner_block = ""
-    if needs_planner and "frontera" not in args.available:
-        planner_block = "No hay cuota de frontera para el planificador obligatorio."
-
-    options = {
-        "directo": option(direct_cost, direct_block or validation_block, "El chat implementa."),
-        "delegado": option(common_cost + OVERHEAD, run_block or executor_block or validation_block,
-                           "Un ejecutor implementa."),
-        "coordinado": option(common_cost + args.parts * OVERHEAD + planner_cost,
-                             executor_block or planner_block or validation_block,
-                             "Un Run coordina la ejecución."),
-    }
-    roles = {
-        "directo": validation_roles,
-        "delegado": executor_roles + validation_roles,
-        "coordinado": planner_roles + executor_roles + validation_roles,
-    }
-    return options, roles
+def needs_run(args: argparse.Namespace) -> bool:
+    """Indica si la tarea exige un Run coordinado."""
+    heavy = args.parts >= 2 or args.size == "grande" or args.risk == "alto"
+    return args.verified or (heavy and args.size != "trivial")
 
 
-def option(cost: float, blocker: str, why: str) -> dict:
-    """Resume el costo de una opción factible o el motivo que la impide."""
-    return {"feasible": not blocker, "cost": None if blocker else round(cost, 2), "why": blocker or why}
+def has_validator(args: argparse.Namespace) -> bool:
+    """Indica si lleva validación (todo salvo lo trivial sin riesgo ni entrega verificada)."""
+    return args.size != "trivial" or args.verified or args.risk == "alto"
+
+
+def role_list(mode: str, args: argparse.Namespace, executor: str | None) -> list[dict]:
+    """Arma planificador, ejecutor y validador del modo según la calidad."""
+    top = highest(args.available)
+    roles = []
+    if mode == "coordinado" or (mode == "delegado" and args.size == "mediana"):
+        chat = args.chat_tier == "frontera"
+        roles.append({"role": "planificador", "tier": "frontera" if chat else top, "effort": "alto"} |
+                     ({"session": "chat"} if chat else {}))
+    if mode != "directo":
+        executor_role = {"role": "ejecutor", "tier": executor, "effort": EFFORT[args.size]}
+        roles.append(executor_role | ({"count": args.parts} if mode == "coordinado" else {}))
+    if has_validator(args):
+        passes = 2 if args.verified or (args.risk == "alto" and args.size != "trivial") else 1
+        roles += [{"role": "validador", "tier": top, "effort": "alto", "family": FAMILY, "loop": LOOP}
+                  for _ in range(passes)]
+    return roles
+
+
+def blockers(args: argparse.Namespace, executor: str | None) -> dict[str, str]:
+    """Devuelve el impedimento de cada modo; vacío si es factible."""
+    floor = TIERS[min(TIERS.index(FLOOR[args.size]) + (args.risk == "alto"), len(TIERS) - 1)]
+    run = "La tarea o la entrega verificada requiere un Run coordinado." if needs_run(args) else ""
+    direct = run
+    if not direct and args.chat_no_code:
+        direct = "El chat tiene restringida la implementación."
+    if not direct and W_TIER[args.chat_tier] < W_TIER[floor]:
+        direct = f"El chat requiere nivel {floor} o superior para implementar."
+    if not direct and has_validator(args) and TIERS.index(highest(args.available)) < TIERS.index(args.chat_tier):
+        direct = "No hay cuota para un validador de nivel igual o superior al del chat que implementa."
+    no_executor = "" if executor else "No hay cuota para un ejecutor que alcance el piso de capacidad."
+    return {"directo": direct, "delegado": run or no_executor, "coordinado": no_executor}
+
+
+def cost(mode: str, args: argparse.Namespace, roles: list[dict]) -> float:
+    """Estima el costo relativo de un modo; solo informa y desempata."""
+    work, chat = WORK[args.size], W_TIER[args.chat_tier]
+    validators = [role for role in roles if role["role"] == "validador"]
+    total = sum(W_TIER[role["tier"]] + OVERHEAD for role in validators)
+    if mode == "directo":
+        return work * chat + total
+    executor = next(role for role in roles if role["role"] == "ejecutor")
+    total += (COORD_FIXED + COORD_RATE * work) * chat + work * W_TIER[executor["tier"]]
+    total += (args.parts if mode == "coordinado" else 1) * OVERHEAD
+    return total + (2 * W_TIER[roles[0]["tier"]] + OVERHEAD if roles[0]["role"] == "planificador" else 0)
+
+
+def describe(roles: list[dict], size: str) -> str:
+    """Resume los niveles elegidos (un validador por rol distinto) para explicar la decisión."""
+    seen: dict[str, str] = {}
+    for role in roles:
+        seen.setdefault(role["role"], role["tier"])
+    parts = [f"{name} {tier}" for name, tier in seen.items()]
+    text = " y ".join(filter(None, [", ".join(parts[:-1]), *parts[-1:]])) or "la hace el chat sin validación"
+    return f"tarea {size}: {text}; calidad primero"
 
 
 def choose(args: argparse.Namespace) -> dict:
-    """Aplica la preferencia o elige por costo y orden de desempate."""
-    options, roles = evaluate(args)
-    feasible = [mode for mode in MODES if options[mode]["feasible"]]
-    if args.prefer in feasible:
-        mode = args.prefer
-        reason = f"Se eligió {mode} por la preferencia indicada."
+    """Elige el modo de mayor calidad factible y explica la decisión."""
+    executor = executor_tier(args)
+    block = blockers(args, executor)
+    roles = {mode: role_list(mode, args, executor) for mode in MODES if not block[mode]}
+    options = {mode: {"feasible": not block[mode], "why": block[mode] or "Es factible con los niveles disponibles.",
+                      "cost": round(cost(mode, args, roles[mode]), 2) if mode in roles else None} for mode in MODES}
+    base = "coordinado" if needs_run(args) else "directo" if args.size == "trivial" else "delegado"
+    if args.prefer in roles:
+        mode, lead = args.prefer, f"Se eligió {args.prefer} por la preferencia indicada"
     else:
-        mode = min(feasible, key=lambda name: options[name]["cost"], default=None)
-        if args.prefer == "auto":
-            subject = "El selector"
-        else:
-            subject = f"Como la preferencia {args.prefer} no es factible, el selector"
-        if mode:
-            reason = f"{subject} eligió {mode} por costo y número de sesiones."
-        else:
-            reason = f"{subject} no encontró opciones que cumplan los requisitos con los niveles disponibles."
-    if mode == "coordinado" and args.size == "grande" and args.risk == "alto":
-        reason = (f"{reason.removesuffix('.')}, con un Run en el que la frontera describe la solución con detalle "
-                  "y un modelo medio la escribe.")
-    selected_roles = roles.get(mode, [])
-    return {
-        "mode": mode,
-        "reason": reason,
-        "options": options,
-        "roles": selected_roles,
-        "ask_user": any(role["tier"] == "frontera" for role in selected_roles),
-    }
+        lead = "" if args.prefer == "auto" else f"La preferencia {args.prefer} no es factible"
+        mode = base if base in roles else min(roles, key=lambda m: options[m]["cost"], default=None)
+        if mode and mode != base:
+            lead = f"Respaldo: {block[base].rstrip('.')}"
+    if mode is None:
+        reason = "Ningún modo cumple los requisitos con los niveles disponibles."
+    else:
+        reason = describe(roles[mode], args.size)
+    reason = f"{lead}; {reason[0].lower() + reason[1:]}" if lead else reason
+    selected = roles.get(mode, [])
+    asks = [r for r in selected if r["tier"] == "frontera" and r.get("session") != "chat"]
+    return {"mode": mode, "reason": reason, "options": options, "roles": selected,
+            "ask_user": bool(asks) and not args.frontier_ok}
 
 
 def main(argv: list[str] | None = None) -> int:

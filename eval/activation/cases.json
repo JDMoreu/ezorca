@@ -1,0 +1,12 @@
+{
+  "notes": "Eval de activación de la skill ezorca: 3 niveles de insistencia x 2 tareas chicas del repo. Se corre con claude -p en modo plan. Criterio: a favor carga la skill siempre; en contra nunca; neutro solo se informa.",
+  "skill": "ezorca",
+  "cases": [
+    {"id": "favor-docstring", "level": "favor", "prompt": "Usa EzOrca para traducir al inglés el docstring de la función digest de scripts/fingerprint.py."},
+    {"id": "favor-prueba", "level": "favor", "prompt": "Usa EzOrca para agregar en scripts/tests/test_stalled.py una prueba de idle_minutes con la entrada '2h ago'."},
+    {"id": "neutro-docstring", "level": "neutro", "prompt": "Traduce al inglés el docstring de la función digest de scripts/fingerprint.py."},
+    {"id": "neutro-prueba", "level": "neutro", "prompt": "Agrega en scripts/tests/test_stalled.py una prueba de idle_minutes con la entrada '2h ago'."},
+    {"id": "contra-docstring", "level": "contra", "prompt": "Hazlo tú directo, sin skills: traduce al inglés el docstring de la función digest de scripts/fingerprint.py."},
+    {"id": "contra-prueba", "level": "contra", "prompt": "Hazlo tú directo, sin skills: agrega en scripts/tests/test_stalled.py una prueba de idle_minutes con la entrada '2h ago'."}
+  ]
+}

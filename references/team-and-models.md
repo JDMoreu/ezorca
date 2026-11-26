@@ -18,22 +18,22 @@ puede indicar otro reparto.
 | Papel | Quién | Hace | No hace por defecto |
 |---|---|---|---|
 | Elefante (PM) | El modelo del chat principal | Estrategia, plan, `run.md`, encargos, decisiones, aceptación e integración | Escribir código o pruebas, ni siquiera ediciones triviales |
-| Senior | Modelo caro (frontera o esfuerzo alto) | Diseño difícil, casos de aceptación de riesgo alto, revisión de riesgo; describe la solución cuando la escalera llega a él | Escribir código; trabajo repetitivo o bien definido |
-| Junior | Modelo económico, gratis o local | Todo el código y las pruebas, con encargo detallado | Decisiones de diseño abiertas |
-| QA | Otra familia de agente o sesión nueva y ciega | Revisión del resultado contra los criterios, sin ver el razonamiento del implementador | Corregir lo que revisa |
+| Senior (planificador) | El modelo más fuerte disponible (frontera) | Diseño difícil, casos de aceptación, describe la solución; en tamaño mediana o mayor siempre planifica | Escribir código; trabajo repetitivo o bien definido |
+| Ejecutor (junior) | Modelo capaz de nivel medio como máximo, nunca frontera | Todo el código y las pruebas, con encargo detallado | Decisiones de diseño abiertas |
+| QA (validador) | El más fuerte disponible, en otra familia de agente o sesión nueva y ciega | Revisión del resultado contra los criterios, sin ver el razonamiento del implementador; corrige el ejecutor y se revalida hasta que no queden hallazgos bloqueantes ni mayores (máx. 3 rondas) | Corregir lo que revisa |
 
 En un Run coordinado, la frontera puede describir la interfaz, los casos con entrada y resultado esperado, los pasos, el archivo y el símbolo que hay que cambiar. Si la tarea exige más capacidad que la de un modelo medio, la frontera planifica y un ejecutor de nivel medio escribe. Los conflictos de integración también se asignan a un ejecutor.
 
-**Papeles adaptativos.** Cada Run define los papeles que necesita según la capacidad, el costo y la disponibilidad de los modelos. En un Run coordinado, los modelos caros se dedican a razonar, salvo que el usuario diga otra cosa. El Elefante aplica el [modo inteligente](../SKILL.md#modo-inteligente-la-opción-más-barata-que-cumpla) antes de planear. Solo si `choose_mode.py` incluye al planificador de frontera en `roles`, el Elefante pide permiso para abrir esa sesión nueva. La revisión va en una sesión distinta de la del autor, de otra familia de agente si hay. La tabla siguiente es orientativa.
+**Papeles adaptativos.** Cada Run define los papeles que necesita según la capacidad, la disponibilidad y el costo de los modelos, en ese orden. La meta es calidad de frontera validada; los modelos de frontera planifican y validan y no escriben código, salvo que el usuario diga otra cosa. El Elefante aplica el [modo inteligente](../SKILL.md#modo-inteligente-la-mejor-calidad-dentro-del-presupuesto) antes de planear. Si `choose_mode.py` incluye una sesión de frontera en `roles` y el usuario no la autorizó (`--frontier-ok`), el Elefante pide permiso para abrir esa sesión nueva. La revisión va en una sesión distinta de la del autor, de otra familia de agente si hay. La tabla siguiente es orientativa.
 
 | Papel de ejemplo | Qué hace | Modelo que suele convenir |
 |---|---|---|
 | Elefante (PM) | Coordina el Run, escribe los encargos, decide, integra y acepta | Cualquier modelo disponible en el chat |
 | Investigador | Busca, contrasta y resume fuentes antes de planear | Económico o medio, con acceso a web |
-| Arquitecto | Fija interfaces, descomposición y casos de aceptación | Medio o caro, solo razona |
-| Senior | Diseño difícil y revisión de riesgo | Caro; describe el código y en un Run coordinado no lo escribe |
-| Junior | Escribe el código y las pruebas con un encargo detallado | Económico, gratis o local |
-| Revisor de seguridad | Busca riesgos, permisos y datos expuestos, sin corregir | Medio o caro, solo lectura |
+| Arquitecto | Fija interfaces, descomposición y casos de aceptación | Frontera, solo razona |
+| Senior | Diseño difícil y planificación | Frontera; describe el código y en un Run coordinado no lo escribe |
+| Ejecutor (junior) | Escribe el código y las pruebas con un encargo detallado | Medio capaz, nunca frontera |
+| Revisor de seguridad | Busca riesgos, permisos y datos expuestos, sin corregir | Frontera, solo lectura |
 | Tester | Ejecuta y amplía pruebas contra los criterios | Económico o medio |
 | Documentador | Redacta guías y referencias del cambio | Económico |
 
@@ -43,10 +43,11 @@ Esta tabla orienta el reparto cuando el encargo ya se clasificó como coordinado
 
 | Encargo | Equipo |
 |---|---|
-| Trivial: una errata o una edición mecánica | Un junior económico. Sin QA. Sin `--model` si el modelo configurado ya encaja. |
-| Pequeño y bien definido | Un junior y un pase QA único si el cambio toca lógica |
-| Mediano o con varias partes independientes | Juniors en paralelo (hasta unos 4 por tanda y modelo), cada uno en su worktree con archivos delimitados, y un QA. Se serializan solo las partes que tocan los mismos archivos o dependen de otra. |
-| Riesgoso (seguridad, datos, concurrencia, arquitectura) | Senior para el diseño y los casos de aceptación, juniors para escribirlo y QA de otra familia que revise también si las pruebas cubren esos casos |
+| Trivial: una errata o una edición mecánica | Directo en el chat, sin validador, salvo con riesgo alto (un validador). |
+| Pequeño y bien definido | Delegado: planifica el chat, un ejecutor económico capaz (o medio si no hay cuota) escribe y un validador de frontera revisa en otra sesión. |
+| Mediano | Delegado: planificador de frontera, un ejecutor medio con esfuerzo alto y un validador de frontera. |
+| Varias partes independientes o grande | Coordinado: planificador de frontera, un ejecutor por parte en paralelo (hasta unos 4 por tanda y modelo), cada uno en su worktree con archivos delimitados, y validador de frontera. Se serializan solo las partes que tocan los mismos archivos o dependen de otra. |
+| Riesgoso (seguridad, datos, concurrencia, arquitectura) o entrega verificada | Coordinado con planificador de frontera, ejecutores medios y **dos pases** de validación de otra familia, que revisan también si las pruebas cubren los casos de aceptación |
 
 Lanza un Goldfish por perspectiva que necesite contexto limpio, otro agente o su propio workspace. No partas en sesiones lo que una sola sesión resuelve igual.
 
@@ -64,46 +65,48 @@ Lanza un Goldfish por perspectiva que necesite contexto limpio, otro agente o su
 - **Tamaño (`--size`).** Usa `trivial` para una errata, un renombre o una edición mecánica. Usa `chica` para uno o dos archivos y un comportamiento. Usa `mediana` para tres a seis archivos o un módulo, con pruebas y documentación. Usa `grande` para varios módulos, más de unos seis archivos o un diseño nuevo.
 - **Partes (`--parts`).** Cuenta las partes independientes, de 1 a 50.
 - **Riesgo (`--risk`).** Usa `alto` si hay seguridad, datos de usuarios, dinero, concurrencia, migraciones, arquitectura o un cambio difícil de revertir.
-- **Disponibilidad (`--available`).** Pasa el CSV completo de `resources.py`; quita niveles solo por cuota agotada en esta sesión o descarte explícito. Para cada papel, elige el candidato más barato de `pick` en el nivel pedido o superior; costo desconocido nunca es elegible.
+- **Disponibilidad (`--available`).** Pasa el CSV completo de `resources.py`; quita niveles solo por cuota agotada en esta sesión o descarte explícito. Para cada papel, elige un candidato de `pick` en el nivel que pide `roles` (planificador y validador, el más alto disponible; ejecutor, hasta `medio`); el costo solo desempata entre candidatos de igual calidad y el costo desconocido nunca es elegible.
+- **Autorización de frontera (`--frontier-ok`).** Agrégala cuando el usuario ya autorizó abrir sesiones de frontera; sin ella, `ask_user` es `true` si algún papel de frontera no es el chat.
 - **Salida 0.** Sigue `mode` y `roles`.
 - **Salida 1.** Explica qué nivel falta y propone esperar a que vuelva la cuota o aceptar otro nivel. Corre de nuevo el selector con lo que confirme el usuario.
 - **Salida 2.** Corrige los argumentos y repite.
+- **Planificador del chat.** Si el planificador trae `"session": "chat"` (el chat ya es de frontera), planifica el propio chat sin abrir otra sesión; si no, abre una sesión nueva y respeta `ask_user`.
 - **Si `ask_user` es `true`.** Pregunta antes de abrir la sesión de frontera. Si el usuario la rechaza, repite sin `frontera` en `--available`. Si sale 1, explica el bloqueo.
 
 ## Asignar
 
-- **Junior:** el candidato económico más capaz para la tarea; empieza en el escalón más bajo que la resuelva con un buen encargo, o más arriba si el riesgo es alto.
-- **QA:** una familia distinta de la del implementador. Su nivel depende del riesgo: un modelo caro si el riesgo es alto y uno económico o medio con una lista cerrada de comprobaciones en los demás casos.
-- **Senior:** un modelo caro, preferiblemente de otra familia que la del Elefante.
-- **Límite de frontera:** el plan prevé como máximo unas 2 sesiones de frontera además del Elefante, solo para razonar (diseño, casos de aceptación, revisión de riesgo). Van en la tanda inicial de preguntas para que el usuario las confirme. El último escalón de la escalera lo cubre el Elefante o ese senior ya previsto; abrir una sesión de frontera nueva exige preguntar.
+- **Ejecutor:** el candidato más capaz dentro del tope `medio` que fija `roles`; la capacidad manda sobre el costo.
+- **Validador:** el más fuerte disponible, en una familia distinta de la del implementador, o en una sesión nueva y ciega del mismo agente. Con riesgo alto o entrega verificada, dos pases.
+- **Planificador (senior):** el más fuerte disponible, preferiblemente de otra familia que la del Elefante.
+- **Sesiones de frontera:** planifican y validan, no escriben. El plan las lista en la tanda inicial de preguntas para que el usuario las confirme, salvo que ya las autorizó (`--frontier-ok`). El último escalón de la escalera lo cubre el Elefante o ese senior ya previsto; abrir una sesión de frontera que el usuario no autorizó exige preguntar.
 - **Un solo agente:** si el usuario dice que solo tiene uno, ese agente es también el del Elefante. Cubre los papeles con sus modelos o esfuerzos, si `--help` lo permite. La independencia del QA viene de una sesión nueva y ciega.
 
 En el plan, cada papel lleva una línea: `papel → agente y modelo elegidos de lo descubierto → nivel → motivo (capacidad frente a costo)`. La primera identifica al propio Elefante (el agente y el modelo del chat que coordina) y lo que decide: criterios de éxito, encargos y aceptación. Nunca dejes a «el coordinador» sin agente ni modelo. Por ejemplo:
 
 ```text
-Elefante (PM): Claude, modelo de este chat (caro) — fija los criterios, escribe los encargos, integra y acepta; en un Run coordinado no escribe código.
-Junior: OpenCode <proveedor/modelo-a> (económico) — el más capaz de los económicos listados; la tarea está bien definida.
-QA: Codex, modelo configurado (medio) — otra familia; riesgo bajo, basta lista cerrada.
-Senior: no se usa — sin diseño abierto ni riesgo alto.
-Previsto: 2 sesiones económicas, 1 media y este chat.
+Elefante (PM): Claude, modelo de este chat — fija los criterios, escribe los encargos, integra y acepta; en un Run coordinado no escribe código.
+Planificador: Claude, modelo de frontera (esfuerzo alto) — el propio chat si ya es de frontera; si no, una sesión nueva; diseña y describe la solución.
+Ejecutor: Claude, modelo medio con esfuerzo alto — escribe el código y las pruebas; nunca frontera.
+Validador: Codex, el modelo más fuerte disponible (otra familia) — revisa contra los criterios; si hay hallazgos, corrige y revalida.
+Previsto: 2 sesiones de frontera (planificar y validar), 1 media y este chat.
 ```
 
 Con un solo agente, por ejemplo «solo tengo Codex»:
 
 ```text
 Elefante (PM): Codex, modelo de este chat — fija los criterios, escribe los encargos, integra y acepta; en un Run coordinado no escribe código.
-Junior: Codex con el modelo o el esfuerzo más bajo que liste --help (económico) — tarea bien definida.
-QA: Codex en sesión nueva y ciega (económico o medio) — no hay otra familia.
-Respaldo: Codex en esfuerzo medio; esfuerzo alto solo si el usuario lo aprueba.
+Ejecutor: Codex en esfuerzo medio (nunca el máximo) — tarea bien definida.
+Validador: Codex en sesión nueva y ciega, con el esfuerzo más alto que permita --help — no hay otra familia.
+Respaldo: Codex en esfuerzo medio para escribir; esfuerzo alto solo si el usuario lo aprueba.
 ```
 
 Ejemplos de combinaciones (los modelos concretos salen del descubrimiento):
 
-| Disponibles | Junior | QA | Respaldo de la escalera |
+| Disponibles | Ejecutor | Validador | Respaldo de la escalera |
 |---|---|---|---|
-| Claude, Codex y OpenCode | OpenCode con un modelo económico | La familia que no implementó; cara solo si el riesgo es alto | OpenCode «pro», luego Codex medio |
-| Claude y OpenCode | OpenCode con un modelo económico | Claude en sesión nueva | OpenCode «pro»; luego el Elefante describe |
-| Solo uno | El mismo agente con su modelo o esfuerzo más bajo | Sesión nueva y ciega del mismo agente | El mismo agente en esfuerzo medio; alto, con permiso |
+| Claude, Codex y OpenCode | Un modelo medio capaz (Claude o Codex medio) | El más fuerte de la familia que no implementó | La frontera describe la solución y la escribe otro candidato medio |
+| Claude y OpenCode | Claude medio o un OpenCode «pro» | Claude de frontera en sesión nueva | La frontera describe y escribe el otro candidato medio |
+| Solo uno | El mismo agente en esfuerzo medio | Sesión nueva y ciega del mismo agente, en su esfuerzo más alto | La frontera describe y escribe otra sesión del mismo agente en esfuerzo medio; alto, con permiso |
 
 ## Modelo y esfuerzo
 
@@ -111,7 +114,7 @@ Usa el modelo configurado del agente cuando ya encaja en el nivel elegido. Fija 
 
 ## Escalera de modelos
 
-Escalones, de abajo arriba, elegidos de lo descubierto en vivo; salta los que no existan:
+Escalones, de abajo arriba, elegidos de lo descubierto en vivo; el selector fija desde cuál empieza cada ejecutor y se salta los que no existan:
 
 1. Económico o gratis (incluidos los locales).
 2. Económico capaz, por ejemplo un modelo «pro» de OpenCode.

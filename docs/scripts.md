@@ -40,37 +40,47 @@ python <skill>/scripts/discover.py --cache <carpeta del Run>/roster.json
 
 ## choose_mode.py
 
-Se ejecuta antes de planear. Estima el costo de los modos directo, delegado y coordinado y elige el más barato que cumple los requisitos.
+Se ejecuta antes de planear. Elige el modo con la mejor calidad posible, validada, como si el modelo más fuerte hiciera todo; después prioriza la eficiencia (tiempo) y al final el costo, siempre dentro de los topes del plan (los filtra `resources.py` vía `--available`). El costo ya no decide el modo: solo se informa en `options.<modo>.cost` y desempata entre alternativas.
 
 ```text
 python <skill>/scripts/choose_mode.py --chat-tier NIVEL --size {trivial,chica,mediana,grande}
-    [--parts N] [--risk {bajo,alto}] [--verified] [--chat-no-code]
+    [--parts N] [--risk {bajo,alto}] [--verified] [--chat-no-code] [--frontier-ok]
     [--available NIVEL[,NIVEL...]] [--prefer {auto,directo,delegado,coordinado}]
 ```
 
-`--parts` cuenta las partes independientes, admite de 1 a 50 y vale 1 por defecto. El riesgo predeterminado es `bajo`. Usa `--verified` para la entrega verificada y `--chat-no-code` cuando el chat no deba escribir código. `--available` indica los niveles con cuota y toma todos por defecto. `--prefer` vale `auto` por defecto. Si se pide un modo y resulta factible, el script lo usa. Si el modo pedido resulta inviable, el script elige en automático y explica el motivo en `reason`. En empate, gana el modo con menos sesiones, en orden directo, delegado y coordinado.
+`--parts` cuenta las partes independientes, admite de 1 a 50 y vale 1 por defecto. El riesgo predeterminado es `bajo`. Usa `--verified` para la entrega verificada, `--chat-no-code` cuando el chat no deba escribir código y `--frontier-ok` cuando el usuario ya autorizó sesiones nuevas de frontera. `--available` indica los niveles con cuota y toma todos por defecto. `--prefer` vale `auto` por defecto; si se pide un modo (`directo`, `delegado` o `coordinado`) y es factible, el script lo usa; si no, elige en automático y lo explica en `reason`. Cuando el modo ideal no es factible y cae a otro (respaldo), `reason` empieza con «Respaldo: <motivo>».
 
-Ejemplo con `--chat-tier frontera --size mediana`:
+Política, en orden:
+
+1. **Modo.** `directo` solo con `--size trivial` o `--prefer directo`, y sin `--verified`. `coordinado` con `--parts` ≥ 2, `--size grande`, `--risk alto` o `--verified`. En otro caso, `delegado`.
+2. **Planificador.** Obligatorio en `coordinado` y en `delegado` de tamaño `mediana`: el nivel más alto disponible (frontera si hay) con esfuerzo alto. En `delegado` de tamaño `chica` planifica el propio chat (sin rol). Si el chat es de frontera, el planificador es el propio chat: el rol lleva `"session": "chat"`, es de frontera aunque no haya cuota de frontera en `--available`, y no cuenta para `ask_user`; en ese caso se planifica en el chat, sin abrir una sesión nueva.
+3. **Ejecutor.** Nunca frontera: el nivel siguiente al piso de capacidad con tope `medio` (o el más cercano hacia arriba y, si no, el piso). Si ni el piso tiene cuota, la opción no es factible. Con `grande` y riesgo alto el ejecutor queda en `medio` aunque el piso sea frontera: la frontera describe la solución y valida dos veces. Esfuerzo `medio` en `chica`, `alto` en `mediana` y `grande`. En `coordinado` hay un ejecutor por parte (`"count": parts`).
+4. **Validador.** En todo lo que no sea trivial, y también en una tarea trivial con `--risk alto` (1 pase) o `--verified` (2): el nivel más alto disponible, esfuerzo alto, de otra familia si hay o en una sesión nueva y ciega. Son 2 pases con `--verified` o con `--risk alto` en tareas no triviales, y 1 en los demás casos. En `directo` el validador debe ser como mínimo del nivel del chat que implementa; si `--available` no lo permite, `directo` no es factible (no se degrada la validación ni se pregunta); incluye `"loop"` (corregir y revalidar hasta que no queden hallazgos bloqueantes ni mayores, máx. 3 rondas).
+5. **Pregunta.** `ask_user` es `true` si algún rol es de frontera y no es el propio chat (`session: chat`), salvo que se pase `--frontier-ok`.
+
+Ejemplo con `--chat-tier frontera --size mediana --available economico,medio,frontera`:
 
 ```json
 {
-  "mode": "directo",
-  "reason": "El selector eligió directo por costo y número de sesiones.",
+  "mode": "delegado",
+  "reason": "tarea mediana: planificador frontera, ejecutor medio y validador frontera; calidad primero",
   "options": {
-    "directo": {"feasible": true, "cost": 43.0, "why": "El chat implementa."},
-    "delegado": {"feasible": true, "cost": 76.0, "why": "Un ejecutor implementa."},
-    "coordinado": {"feasible": true, "cost": 76.0, "why": "Un Run coordina la ejecución."}
+    "directo": {"feasible": true, "why": "Es factible con los niveles disponibles.", "cost": 51.0},
+    "delegado": {"feasible": true, "why": "Es factible con los niveles disponibles.", "cost": 113.0},
+    "coordinado": {"feasible": true, "why": "Es factible con los niveles disponibles.", "cost": 113.0}
   },
   "roles": [
-    {"role": "validador", "tier": "economico-capaz", "effort": "medio", "family": "distinta si hay; si no, sesión nueva ciega del mismo agente"}
+    {"role": "planificador", "tier": "frontera", "effort": "alto", "session": "chat"},
+    {"role": "ejecutor", "tier": "medio", "effort": "alto"},
+    {"role": "validador", "tier": "frontera", "effort": "alto", "family": "distinta si hay; si no, sesión nueva ciega del mismo agente", "loop": "corregir y revalidar hasta que no queden hallazgos bloqueantes ni mayores (máx. 3 rondas)"}
   ],
-  "ask_user": false
+  "ask_user": true
 }
 ```
 
-Los textos de `reason` y `why` explican la decisión y la factibilidad. `roles` contiene los papeles del modo elegido. Si `ask_user` es `true`, pregunta antes de abrir una sesión de frontera. El código de salida es 0 si hay un modo factible, 1 si ningún modo es factible (`mode: null` en el JSON) y 2 si los argumentos son inválidos (`error:` en stderr).
+`roles` contiene los papeles del modo elegido. El código de salida es 0 si hay un modo factible, 1 si ninguno lo es (`mode: null` en el JSON) y 2 si los argumentos son inválidos (`error:` en stderr).
 
-### Pesos y tamaños
+### Pesos y tamaños (solo para informar y desempatar)
 
 Los costos son estimaciones relativas calibradas con el [A/B justo](evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca).
 
@@ -82,17 +92,16 @@ Los costos son estimaciones relativas calibradas con el [A/B justo](evaluation.m
 | `medio` | 4 |
 | `frontera` | 10 |
 
-| Tamaño | Trabajo | Nivel mínimo del ejecutor | Esfuerzo del ejecutor |
+| Tamaño | Trabajo | Piso de capacidad del ejecutor | Esfuerzo del ejecutor |
 |---|---:|---|---|
 | `trivial` | 1 | `gratis` | `bajo` |
-| `chica` | 2 | `economico` | `bajo` |
-| `mediana` | 4 | `economico-capaz` | `medio` |
+| `chica` | 2 | `economico` | `medio` |
+| `mediana` | 4 | `economico-capaz` | `alto` |
 | `grande` | 10 | `medio` | `alto` |
 
-- Implementar cuesta el trabajo multiplicado por el peso del nivel del chat o del ejecutor. El riesgo alto sube un escalón el nivel requerido. En modo delegado o coordinado, el ejecutor llega como máximo a `medio`. Si la tarea exige más capacidad, la frontera planifica y describe la solución y un ejecutor de nivel medio la escribe.
-- Coordinar cuesta al chat `(4,8 + 0,4 × trabajo) × peso del chat`. Cada sesión adicional suma 1. El modo delegado cuenta una sesión de ejecución y el coordinado cuenta una por parte independiente.
-- Cada pase de validación suma el peso del validador más 1 por la sesión. Se usa el nivel disponible más barato desde `economico-capaz`, con esfuerzo medio. Con riesgo alto se usa frontera con esfuerzo alto. La revisión va a otra familia si hay una o a una sesión nueva y ciega del mismo agente. La entrega verificada siempre cuenta dos pases, incluso para tareas triviales. Una tarea trivial con entrega normal no lleva validación.
-- Una tarea grande, con riesgo alto o con al menos tres partes independientes requiere un planificador de frontera con esfuerzo alto. Su costo es 21, incluida la sesión. Estos requisitos y la entrega verificada exigen el modo coordinado.
+- El riesgo alto sube un escalón el piso de capacidad. El ejecutor llega como máximo a `medio`.
+- Implementar cuesta el trabajo multiplicado por el peso del nivel que lo hace. Coordinar cuesta al chat `(4,8 + 0,4 × trabajo) × peso del chat`. Cada sesión adicional suma 1; un planificador cuesta 21 con su sesión.
+- Cada pase de validación suma el peso del validador más 1 por la sesión.
 
 ## check_spec.py
 
@@ -105,6 +114,8 @@ python <skill>/scripts/check_spec.py specs/g1.md specs/g2.md --kind implementaci
 ```json
 [{"file": "specs/g1.md", "ok": true, "missing": [], "warnings": []}]
 ```
+
+Además de lo que falta, avisa (en `warnings`, sin fallar) si un encargo de implementación no trae la regla de no debilitar pruebas o si uno de revisión no comprueba que no se debilitaron.
 
 `missing` lista lo que falta (por ejemplo `"Ejemplo"`) y `warnings` avisa de la coletilla «No delegues». Opciones: `SPEC [SPEC ...]`; `--kind {implementacion,revision}` (por omisión `implementacion`; la revisión exige `no verificable` y `Método y límites`). Exit 0 si todos están completos; 1 con lo que falta; 2 si un archivo no existe.
 
@@ -208,10 +219,13 @@ python <skill>/scripts/compare_skill_results.py cases.json baseline.json candida
 ```
 
 ```json
-{"accepted": true, "baseline_passes": 5, "candidate_passes": 6, "total_judgments_per_variant": 8, "regressions": [], "critical_failures": []}
+{"accepted": true, "baseline_passes": 5, "candidate_passes": 6, "total_judgments_per_variant": 8, "regressions": [], "critical_failures": [],
+ "baseline_pass_k": {"cases": {"c1": {"pass_at_k": true, "pass_hat_k": false}}, "total_pass_at_k": 1, "total_pass_hat_k": 0},
+ "candidate_pass_k": {"cases": {"c1": {"pass_at_k": true, "pass_hat_k": true}}, "total_pass_at_k": 1, "total_pass_hat_k": 1},
+ "reliability_regression": false, "warnings": []}
 ```
 
-Acepta solo con más aciertos totales, ninguno menos por par caso–criterio y todos los críticos aprobados en cada repetición. Opciones: los posicionales `rubric`, `baseline` y `candidate`. Exit 0 si acepta; 1 si rechaza, con las regresiones; 2 si los datos son inválidos o incompletos.
+Acepta solo con más aciertos totales, ninguno menos por par caso–criterio, todos los críticos aprobados en cada repetición y sin regresión de confiabilidad. Por brazo y por caso calcula **pass@k** (al menos una repetición aprueba) y **pass^k** (todas aprueban), más el total de casos con pass^k; una repetición aprueba un caso si cumple sus criterios críticos (todos, si el caso no tiene críticos). Rechaza si la candidata tiene menos casos con pass^k que la línea base (`reliability_regression`). Con una sola repetición ambos valores coinciden y `warnings` lo avisa. Opciones: los posicionales `rubric`, `baseline` y `candidate`. Exit 0 si acepta; 1 si rechaza, con las regresiones; 2 si los datos son inválidos o incompletos.
 
 ## cost_report.py
 

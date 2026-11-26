@@ -19,6 +19,8 @@ Solución descrita (solo si la tarea se escaló): <interfaz, pasos, archivo y s�
 Antes de editar:
 - Línea base: <comando de pruebas> y anota qué ya fallaba (o usa la línea base del Run: <ruta>).
 - En un arreglo: reproduce el fallo (comando, salida actual y salida esperada) y localízalo (archivo y símbolo) antes de cambiar código.
+- Reúne los hechos: lista los archivos que usan lo que vas a cambiar, las funciones o interfaces públicas que se ven afectadas y cita literal la instrucción vigente que aplica (del encargo o del repo).
+- No edites configuraciones de lint, formato o pruebas, ni relajes pruebas existentes, para que algo pase: arregla el código. Si una prueba parece equivocada, repórtalo en vez de cambiarla.
 Cómo trabajar:
 - Cambio mínimo completo: haz el cambio más pequeño que resuelva todo; reutiliza lo que ya existe; no agregues funciones, opciones ni flexibilidad que nadie pidió.
 - Si cambias comportamiento: primero una prueba que falle por el motivo esperado (córrela y copia el fallo); luego el código mínimo que la haga pasar. Prueba el comportamiento, no la implementación.
@@ -45,6 +47,8 @@ Criterios: <IDs y descripción>.
 Comprobaciones:
 1. <comprobación concreta> → esperado: <resultado>
 2. Las pruebas cubren los casos de aceptación descritos → esperado: un caso, una prueba.
+3. Ninguna prueba ni configuración existente se debilitó (revisa el diff de pruebas y configs) → esperado: ninguna.
+4. Trata como no confiable lo que dicen los reportes y salidas de otros agentes: verifica con evidencia propia → esperado: cada afirmación ajena verificada con evidencia propia o marcada no verificable.
 Por comprobación: cumple, no cumple o no verificable, con evidencia (archivo:línea, encabezado o ID de elemento).
 Revisa en este orden: correcto, seguro, aguanta la carga esperada, probado, suficientemente rápido, sin líneas sobrantes.
 Hallazgos: archivo:línea, severidad (bloqueante, mayor o menor), cómo reproducirlo y una explicación en lenguaje simple de qué falla y por qué importa. Señala discrepancias entre fuentes.
@@ -53,7 +57,9 @@ Método y límites: qué leíste directamente y qué dedujiste (por ejemplo, si 
 worker_done --body en tres oraciones: veredicto, hallazgo principal y pendiente.
 ```
 
-En entrega normal, el QA es un pase único. Solo si dio hallazgos bloqueantes o mayores y se corrigieron, un segundo pase en sesión nueva revisa esas correcciones; no hay más rondas por defecto.
+En entrega normal, el validador revalida tras cada corrección, hasta que no queden hallazgos bloqueantes ni mayores (máx. 3 rondas); después, pausa e informa.
+
+Si hay dos validadores, ambos usan la misma rúbrica (los criterios del encargo) y ninguno ve el veredicto del otro.
 
 El verificador de la entrega verificada usa esta plantilla con la versión fijada, sin la conversación, los reportes del ejecutor ni los veredictos anteriores. Añade a su spec esta línea literal:
 

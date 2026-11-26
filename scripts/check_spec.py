@@ -12,6 +12,12 @@ from typing import Any
 
 IMPLEMENTACION = "implementacion"
 REVISION = "revision"
+WEAKENED_PHRASES = (
+    "se debilito",
+    "pruebas debilitadas",
+    "debilitar pruebas",
+    "relajes pruebas",
+)
 
 
 def normalize(text: str) -> str:
@@ -75,6 +81,30 @@ def missing_revision(text: str, flat: str) -> list[str]:
     return missing
 
 
+def section_text(text: str, labels: tuple[str, ...]) -> str:
+    """Devuelve las líneas desde una etiqueta hasta el siguiente encabezado."""
+    inside, lines = False, []
+    for line in text.splitlines():
+        if inside and line.lstrip().startswith("#"):
+            inside = False
+        if not inside and has_label(line, labels):
+            inside = True
+        if inside:
+            lines.append(line)
+    return "\n".join(lines)
+
+
+def missing_rules(text: str, flat: str, kind: str) -> list[str]:
+    """Avisos (no errores) por la regla de no debilitar pruebas."""
+    if kind == REVISION:
+        checks = section_text(text, ("Comprobaciones", "Comprobación", "Qué devolver"))
+        if not any(phrase in normalize(checks) for phrase in WEAKENED_PHRASES):
+            return ["sin comprobación: pruebas debilitadas"]
+    elif "debilit" not in flat and "relajes pruebas" not in flat:
+        return ["sin regla: no debilitar pruebas"]
+    return []
+
+
 def evaluate(path: Path, text: str, kind: str) -> dict[str, Any]:
     """Evalúa el texto de un archivo y devuelve su resultado como diccionario."""
     flat = normalize(text)
@@ -83,6 +113,7 @@ def evaluate(path: Path, text: str, kind: str) -> dict[str, Any]:
     else:
         missing = missing_implementacion(text, flat)
     warnings = ["coletilla: No delegues"] if "no delegues" in flat else []
+    warnings += missing_rules(text, flat, kind)
     return {
         "file": str(path),
         "ok": not missing,

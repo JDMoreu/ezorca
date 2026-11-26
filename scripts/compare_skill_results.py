@@ -93,6 +93,29 @@ def read_judgments(
     return judgments
 
 
+def pass_k(
+    criteria: Mapping[Criterion, bool], judgments: Mapping[Trial, bool], repeats: int
+) -> dict[str, Any]:
+    """pass@k y pass^k por caso. Una repetición aprueba si cumple los criterios
+    críticos del caso (todos los criterios si el caso no tiene ninguno crítico)."""
+    cases: dict[str, list[Criterion]] = {}
+    for key in criteria:
+        cases.setdefault(key[0], []).append(key)
+    result = {}
+    for case, keys in sorted(cases.items()):
+        required = [key for key in keys if criteria[key]] or keys
+        runs = [
+            all(judgments[(*key, repeat)] for key in required)
+            for repeat in range(1, repeats + 1)
+        ]
+        result[case] = {"pass_at_k": any(runs), "pass_hat_k": all(runs)}
+    return {
+        "cases": result,
+        "total_pass_at_k": sum(item["pass_at_k"] for item in result.values()),
+        "total_pass_hat_k": sum(item["pass_hat_k"] for item in result.values()),
+    }
+
+
 def compare(
     rubric: Mapping[str, Any], original: Mapping[str, Any], proposed: Mapping[str, Any]
 ) -> dict[str, Any]:
@@ -124,15 +147,29 @@ def compare(
                 for key in keys
                 if not candidate[key]
             )
+    baseline_k = pass_k(criteria, baseline, repeats)
+    candidate_k = pass_k(criteria, candidate, repeats)
+    reliability_regression = candidate_k["total_pass_hat_k"] < baseline_k["total_pass_hat_k"]
+    warnings = []
+    if repeats == 1:
+        warnings.append(
+            "Con una sola repetición pass@k y pass^k coinciden; "
+            "usa repeats >= 2 para medir confiabilidad"
+        )
     return {
         "accepted": candidate_passes > baseline_passes
         and not regressions
-        and not critical_failures,
+        and not critical_failures
+        and not reliability_regression,
         "baseline_passes": baseline_passes,
         "candidate_passes": candidate_passes,
         "total_judgments_per_variant": len(expected),
         "regressions": regressions,
         "critical_failures": critical_failures,
+        "baseline_pass_k": baseline_k,
+        "candidate_pass_k": candidate_k,
+        "reliability_regression": reliability_regression,
+        "warnings": warnings,
     }
 
 
