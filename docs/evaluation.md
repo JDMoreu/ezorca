@@ -218,9 +218,9 @@ El único hallazgo mayor de las validaciones fue el mismo en 6 de los 9 intentos
 
 1. **Calidad.** Con el mismo proceso no hay diferencia de calidad observable: 9/9 en todos los intentos y 20,7 frente a 21,3 en el juez, dentro del ruido.
 2. **Costo y tiempo.** El brazo con prefijo costó más (+0,07 US$ por intento, +19 %) y tardó 0,5 min más, pero con n = 3 no es concluyente.
-3. **Activación.** Con la descripción anterior a 1.4.0, escribir «Usa EzOrca» no cargó la skill (0 de 3, según los registros de sesión revisados por la coordinación), así que este A/B mide el prefijo y no el flujo de EzOrca. Con la descripción de 1.4.0, la skill se cargó en 4 de 4 corridas de `eval/activation` (otra prueba: dos tareas y dos modelos, muestra chica).
+3. **Activación.** Con la descripción anterior a 1.4.0, escribir «Usa EzOrca» no cargó la skill (0 de 3, según los registros de sesión revisados por la coordinación), así que este A/B mide el prefijo y no el flujo de EzOrca. Con la descripción de 1.4.0, la skill se cargó en 4 de 4 corridas de `eval/activation` (otra prueba: dos tareas y dos modelos, muestra chica). La medición con 1.4.0 instalada, donde la skill sí se cargó en 3 de 3 intentos con el prefijo, está en [Resultados de EzOrca 1.4.0](#resultados-de-ezorca-140-ab-t2-calidad-primero).
 4. **Procesos distintos.** Las diferencias de tiempo y costo de los ensayos del [Historial](#historial) reflejan procesos distintos (directo frente a ciclos), no solo la skill.
-5. **Pendiente.** Repetir este protocolo con 1.4.0 en una tarea grande o de riesgo, donde el selector delegue o coordine.
+5. **Pendiente.** Repetir este protocolo con 1.4.0 en una tarea grande o de riesgo, donde el selector delegue o coordine. La repetición con 1.4.0 en esta misma tarea ya se hizo; sus resultados y lo que sigue pendiente están en [Resultados de EzOrca 1.4.0](#resultados-de-ezorca-140-ab-t2-calidad-primero).
 
 ### Límites
 
@@ -230,6 +230,125 @@ El único hallazgo mayor de las validaciones fue el mismo en 6 de los 9 intentos
 - **Asignación.** La coordinación vio qué id correspondía a qué brazo antes del juicio, pero no se lo dio al juez.
 - **Cuota no atribuida.** El cambio de las ventanas de cuota por plan no se pudo atribuir (coordinación y reinicio de Codex en la misma ventana); queda como no verificable. Delta total observado en la ventana del A/B (instantáneas de `orca account list` antes y después, que incluyen la coordinación y las validaciones, por lo que no se atribuye a ningún brazo): Claude, ventana de 5 h 9 % a 27 % y semanal 43 % a 45 %; Codex, semanal 86 % a 88 % (su ventana de 5 h se reinició en ese lapso, así que su consumo no es verificable); OpenCode Go sin cambio.
 - **Proceso.** El ciclo lo impone el texto común, así que la ventaja de EzOrca sobre un proceso sin guía no se midió.
+
+## Resultados de EzOrca 1.4.0 (A/B T2, calidad primero)
+
+Medición del 27-nov-2026 con la skill EzOrca 1.4.0 instalada. Se lee en este orden: calidad primero; después activación y proceso real; al final tiempo y costo. Es una sola tarea con 3 intentos por brazo, así que sirve para ver tendencias y problemas, no para demostrar diferencias.
+
+### Diseño (1.4.0)
+
+- **Tarea.** T2, de tamaño mediano (dos mejoras en `launch_wave.py` y `discover.py`), desde la misma base `3e33efe` en una copia virgen por intento.
+- **Muestra.** 3 pares, 3 intentos por brazo. Cada intento fue una sesión nueva de Claude Code con Claude Sonnet 5.5 (esfuerzo medio) en ambos brazos.
+- **Único cambio entre brazos.** El prefijo «Usa EzOrca para lo siguiente.» delante del mismo texto común. En el brazo «sin» la skill aparecía en la lista de skills disponibles del chat, pero no se invocó.
+- **Mismo proceso pedido.** Ambos brazos recibieron el mismo texto: plan y criterios por escrito, implementar, validar en una sesión nueva y corregir (máximo 3 rondas). Mismos modelos permitidos (Opus, Sonnet y Haiku).
+- **Asignación.** El orden dentro de cada par se alternó (sin→con, con→sin, sin→con) y se fijó antes de lanzar; los ids de los intentos son ciegos (no dicen el brazo). Los dos intentos de un par corrieron a la vez.
+- **Cómo se midió.** Pruebas ocultas (9 casos que los intentos no ven), la suite de pruebas del repositorio y un juez ciego: un Opus con esfuerzo alto que recibió los seis candidatos como A–F en orden aleatorio y los puntuó de 1 a 5 en cinco criterios (tandas, caché, pruebas, documentación, diseño y alcance; máximo 25). El juez es de la misma familia que los modelos de los brazos.
+
+### Calidad
+
+**Pruebas ocultas y suite del repositorio.** Los seis intentos pasaron las 9 pruebas ocultas (9/9) y dejaron la suite del repositorio en verde con Python 3.12 (la de f4 falla en Python 3.11; ver el hallazgo más abajo). «pass^3 = sí» significa que pasaron los 3 intentos del brazo (no solo el promedio): se cumple en los dos brazos.
+
+**Juez ciego.** Según el juez, ningún candidato tuvo un defecto bloqueante (que invalida la entrega) ni mayor; todos los defectos que anotó son menores.
+
+| Intento | Par | Brazo | Skill cargada | Ocultas | Suite del repo | Juez (de 25) | Defecto principal según el juez (todos menores) |
+|---|---|---|---|---|---|---|---|
+| v5 | 1 | sin | no | 9/9 | 80 OK | 24 | Limpia los espacios de todos los campos opcionales y reescribe la salida de `--dry-run`, fuera de lo pedido |
+| w4 | 1 | con | sí | 9/9 | 81 OK | 23 | `/c` sola (sin barra final) no se convierte a `C:/` |
+| f4 | 2 | con | sí | 9/9 | 80 OK (falla en 3.11) | 20 | El mensaje de caché no escribible es el error crudo del sistema y el sufijo «(caché …)» también aparece en fallos de Orca |
+| b9 | 2 | sin | no | 9/9 | 82 OK | 22 | Acepta un `worktree_name` en blanco y lanza `--name "  "` |
+| b2 | 3 | sin | no | 9/9 | 79 OK | 24 | Limpia los espacios de todos los campos opcionales, fuera de lo pedido |
+| s5 | 3 | con | sí | 9/9 | 86 OK | 22 | Validación poco legible, `--cache ""` añadido fuera de alcance y una referencia sin los flags de `new-top-level` |
+
+La suite del repositorio tenía 73 pruebas antes de cada intento. «Skill cargada» es una comprobación objetiva sobre el registro de la sesión, no lo que dijo el chat.
+
+| Brazo | Juez, promedio (mín–máx) | Tandas | Caché | Pruebas | Documentación | Diseño y alcance |
+|---|---|---|---|---|---|---|
+| Sin EzOrca | 23,33 (22–24) | 4,67 | 5,00 | 5,00 | 4,67 | 4,00 |
+| Con EzOrca | 21,67 (20–23) | 4,67 | 4,00 | 4,67 | 4,67 | 3,67 |
+
+Por pares (con − sin): −1 (23 frente a 24), −2 (20 frente a 22) y −2 (22 frente a 24). Los rangos de los dos brazos se solapan y hay un solo juez, de la misma familia: **no hay una diferencia concluyente**. Si algo, el brazo sin EzOrca quedó 1,7 puntos arriba.
+
+**Un hallazgo que ni las pruebas ocultas ni el juez miden.** Los validadores Opus de dos intentos con EzOrca (w4 y s5) marcaron como bloqueante que las pruebas parchean `os.name` de forma global y se rompen en Python 3.11, la versión mínima declarada y parte de la matriz de CI del repositorio. El intento f4 (con EzOrca, validador Sonnet) conserva ese defecto: su prueba `test_ruta_git_bash_en_windows` falla en Python 3.11 en Windows (1 error en 80 pruebas; `NotImplementedError: cannot instantiate 'PosixPath'`) y por tanto fallaría en el CI. Los intentos sin EzOrca no usan ese parche. Es un caso, no una conclusión: la prueba pasa en Windows con 3.12 y en WSL con 3.14.4, y Linux con 3.11, 3.12 y 3.13 no se verificó.
+
+### Activación
+
+La skill se cargó en **3 de 3** intentos con el prefijo y en **0 de 3** sin él. Antes de 1.4.0 eran 0 de 3 con el prefijo, así que la brecha de activación quedó resuelta. Pero esta cifra es casi trivial: el prefijo nombra la skill, y se cargó entre 4,8 y 25,7 s después del lanzamiento con la herramienta `Skill`. El disparo por la descripción se evaluó aparte en [`eval/activation`](../eval/activation/README.md).
+
+### Proceso real
+
+Los reportes finales de los chats se trataron como no confiables y se contrastaron con los comandos y los registros de cada sesión. Lo que se midió es **«skill + texto común» frente a «texto común»**, no «skill» frente a «nada».
+
+- **Ningún intento con EzOrca corrió `resources.py` ni `choose_mode.py`** (la lectura de cuota y el selector de modo) ni abrió sesiones de Orca. Solo usaron subagentes de Claude Code. No se midió el modo Coordinado ni el selector. El texto común dice que su proceso prevalece sobre el flujo de cualquier skill y limita los modelos a Claude, así que no se puede atribuir solo a la skill que el selector no se ejecutara.
+- **El modo del brazo con no estuvo controlado y salieron tres formas distintas.** 2 de 3 improvisaron un modo delegado (w4: ejecutor Sonnet, validadores Opus nuevos y una ronda de corrección; s5: ejecutor Sonnet, tres validadores Opus nuevos y dos correcciones, el máximo de rondas). 1 de 3 (f4) trabajó directo y validó con un Sonnet.
+- **El brazo sin siguió el mismo esqueleto**, porque el texto común lo ordena: los tres escribieron criterios antes de implementar y validaron en una sesión nueva (uno con validador Opus, dos con Sonnet).
+- **Desvíos declarados por los propios chats y verificados.** f4 escribió los criterios al lanzar a su validador, no antes de implementar; b9 y b2 aplicaron una corrección menor sin revalidarla; f4 no corrigió los hallazgos menores de su validador.
+- **«Sesión distinta» fue un subagente de Claude Code**, con contexto aparte, pero no una sesión de Orca ni otra familia de modelos.
+
+### Tiempo y costo
+
+Esto va después de la calidad porque, en esta medición, **el costo no sigue al brazo sino al nivel del validador (Opus) y al número de rondas**.
+
+Definiciones: **pared** es el tiempo desde el lanzamiento hasta el último mensaje de cualquier sesión del intento; **activo** suma los huecos de hasta 5 minutos entre mensajes. El costo en US$ se calculó con los tokens de los registros de cada sesión y los precios por categoría de token (entrada, salida, caché leída y caché escrita) de una instantánea de `models.dev` (archivo del 25-nov-2026). Es el equivalente a tarifa de API, no dinero cobrado (el plan es de suscripción). La variante «caché 1 h» agrega la escritura de caché de 1 hora a su tarifa pública (2 veces el precio de entrada), que no está en el catálogo: es **estimada**.
+
+| Intento | Par | Brazo | Pared (min) | Activo (min) | Sesiones | US$ (catálogo) | US$ con caché 1 h (estimado) |
+|---|---|---|---|---|---|---|---|
+| v5 | 1 | sin | 6,1 | 6,1 | 4 | 1,56 | 1,64 |
+| w4 | 1 | con | 20,3 | 20,3 | 5 | 3,84 | 3,92 |
+| f4 | 2 | con | 2,8 | 2,8 | 3 | 0,54 | 0,63 |
+| b9 | 2 | sin | 3,3 | 3,3 | 3 | 0,53 | 0,61 |
+| b2 | 3 | sin | 13,4 | 4,5 | 3 | 0,71 | 0,80 |
+| s5 | 3 | con | 23,5 | 23,5 | 8 | 5,89 | 5,98 |
+
+Cada intento incluye un chat de título automático de unos US$ 0,01. En v5, w4 y s5, Opus aporta el 69,6 %, el 80,3 % y el 81,6 % del costo; f4, b9 y b2 usaron solo Sonnet.
+
+| Brazo | US$ promedio (mín–máx) | US$ mediana | Pared, promedio (mín–máx) | Pared, mediana | Activo, promedio (mín–máx) |
+|---|---|---|---|---|---|
+| Sin EzOrca | 0,93 (0,53–1,56) | 0,71 | 7,61 (3,34–13,40) min | 6,10 min | 4,65 (3,34–6,10) min |
+| Con EzOrca | 3,42 (0,54–5,89) | 3,84 | 15,54 (2,78–23,51) min | 20,32 min | 15,54 (2,78–23,51) min |
+
+Con caché de 1 h (estimado), el promedio de US$ sube a 1,02 sin EzOrca y a 3,51 con EzOrca.
+
+- **El promedio con EzOrca esconde un rango amplio**: dos intentos pesados (US$ 3,84 y 5,89) y uno ligero (US$ 0,54). Ese intento ligero (f4) costó lo mismo que su par sin skill (b9, US$ 0,53). Con n = 3 conviene mirar los seis valores, el rango y la mediana, no la razón entre promedios.
+- **El costo sigue al validador y a las rondas.** v5, sin EzOrca pero con un validador Opus, costó 2,9 veces lo que b9, que validó con Sonnet; los validadores Opus ocuparon 16,6 de los 20,3 min de w4 y 18,5 de los 23,5 min de s5.
+- **La pared de b2 está inflada.** El chat dejó una reactivación programada y respondió de nuevo tras 8,9 min de espera; su trabajo real fueron unos 4,5 min (activo).
+
+**Ventanas de cuota del plan de Claude.** Se leyeron antes y después de cada par con `orca account list`; los porcentajes son enteros (±1 punto). Cada cambio incluye todo lo que corrió en esa ventana: los dos intentos del par a la vez y la coordinación del chat que dirige la medición (en el par 1, además, un trabajador auxiliar). **No se atribuyen a un brazo.**
+
+| Par | Ventana de 5 h (antes → después) | Ventana semanal (antes → después) |
+|---|---|---|
+| 1 | 53 % → 80 % (+27) | 69 % → 73 % (+4) |
+| 2 | 4 % → 9 % (+5) | 73 % → 74 % (+1) |
+| 3 | 9 % → 34 % (+25) | 74 % → 77 % (+3) |
+
+La lectura «después» del par 1 es una anotación del registro de la corrida: el archivo de esa lectura se guardó tarde y no sirve.
+
+### Lectura de 1.4.0
+
+1. **Calidad.** En esta tarea y con este n, EzOrca 1.4.0 **no mostró mejor calidad medida**: las ocultas y la suite empatan, y el juez dio 21,7 con EzOrca y 23,3 sin él, dentro del ruido.
+2. **Activación.** Sí se arregló: 3 de 3 con el prefijo (antes, 0 de 3), con la salvedad de que el prefijo nombra la skill.
+3. **Costo extra.** Viene de los validadores de frontera y de las rondas de corrección, no de una diferencia de calidad medida. Esos validadores sí encontraron un defecto real (el parche global de `os.name`) que la batería oculta y el juez no ven, pero es un solo caso.
+4. **Lo que falta medir.** Que el selector (`resources.py` y `choose_mode.py`) se ejecute en los intentos con la skill, y probar una tarea grande o de riesgo, donde delegar o coordinar sea lo esperable.
+
+### Límites de 1.4.0
+
+- **n = 3 por brazo y una sola tarea (T2).** Un solo modelo de chat (Claude Sonnet 5.5).
+- **Un solo juez, de la misma familia que los brazos.** No se usó uno de otra familia porque Codex y OpenCode estaban bloqueados por cuota. Los seis puntajes salen de la misma pasada del mismo juez, así que no son independientes entre sí.
+- **El modo del brazo con no estuvo controlado** (tres formas distintas) y la variación dentro del brazo supera la diferencia entre brazos.
+- **«Sesión distinta» fue un subagente de Claude Code**, no una sesión de Orca ni otra familia.
+- **Pares simultáneos en la misma máquina.** Los dos intentos de un par compiten por CPU, red y límites; los pares 2 y 3 corrieron tras un reinicio de Orca y de la ventana de 5 h.
+- **Pared de b2 inflada** por una reactivación programada; el tiempo activo es la mejor base para comparar.
+- **Cuota no atribuible.** Las ventanas incluyen la coordinación y los validadores, y los dos intentos de cada par corrieron a la vez.
+- **US$ no es dinero cobrado**, y el precio de la caché de 1 h no está en el catálogo (estimado). Tampoco se pudo cruzar el uso de tokens de los registros con el contador de la API.
+- **Python 3.11 verificado solo en Windows.** Linux con 3.11, 3.12 y 3.13 no se verificó (la máquina de prueba solo tenía WSL con Python 3.14.4).
+- **Activación 3/3 casi trivial**, porque el prefijo nombra la skill.
+- **Resellado de la especificación del juez** durante el par 1, antes de ver resultados: según el registro del cambio, solo cambió la descripción del material que recibe el juez, no la rúbrica.
+
+### Pendientes
+
+1. **Hacer que el chat corra el paso 0 (leer los topes de cuota con `resources.py`) y el selector (`choose_mode.py`) de forma fiable.** Es un cambio de la skill (y quizá del texto común del A/B) que hay que evaluar y medir de nuevo; no se hizo en esta ronda.
+2. **Una tarea grande o de riesgo**, donde el selector delegue o coordine.
+3. **Un juez de otra familia** cuando haya cuota.
+4. **Evaluar Graphify** (una skill de grafo de conocimiento del código) como contexto compartido del Run, para que los Goldfish no exploren todo el repositorio. Primero hay que medir, con los registros que ya existen, qué parte del gasto de cada sesión es exploración. Si es significativa en repositorios grandes, se haría un A/B con y sin grafo, con el orden de siempre: calidad, luego tiempo y por último tokens y US$. Se documentaría solo como opción, nunca como requisito; con un solo grafo por Run, refrescado tras cada integración y, en repositorios privados, limitado al código.
 
 ## Límites del método
 
