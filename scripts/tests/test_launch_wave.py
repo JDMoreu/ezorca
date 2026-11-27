@@ -326,7 +326,7 @@ class LaunchWaveTests(unittest.TestCase):
                     worker(
                         "t1",
                         worktree="new-top-level",
-                        repo="id:06de043a",
+                        repo="id:repo-sintetico",
                         worktree_name="ab-t1",
                         base_branch="main",
                     )
@@ -361,7 +361,7 @@ class LaunchWaveTests(unittest.TestCase):
                 "opencode",
                 "--json",
                 "--repo",
-                "id:06de043a",
+                "id:repo-sintetico",
                 "--name",
                 "ab-t1",
                 "--setup",
@@ -380,7 +380,7 @@ class LaunchWaveTests(unittest.TestCase):
                     worker(
                         "t1",
                         worktree="new-top-level",
-                        repo="id:06de043a",
+                        repo="id:repo-sintetico",
                         worktree_name="ab-t1",
                     )
                 ],
@@ -396,7 +396,7 @@ class LaunchWaveTests(unittest.TestCase):
         self.run_main([str(wave)], fake)
         self.assertEqual(
             calls[0][-6:],
-            ["--repo", "id:06de043a", "--name", "ab-t1", "--setup", "skip"],
+            ["--repo", "id:repo-sintetico", "--name", "ab-t1", "--setup", "skip"],
         )
         self.assertNotIn("--base-branch", calls[0])
 
@@ -423,7 +423,7 @@ class LaunchWaveTests(unittest.TestCase):
             {
                 "run": "run_5",
                 "cap_per_model": 1,
-                "workers": [worker("t1", worktree="new-top-level", repo="id:06de043a")],
+                "workers": [worker("t1", worktree="new-top-level", repo="id:repo-sintetico")],
             },
             "wave.json",
         )
@@ -438,7 +438,7 @@ class LaunchWaveTests(unittest.TestCase):
             {
                 "run": "run_5",
                 "cap_per_model": 1,
-                "workers": [worker("t1", repo="id:06de043a")],
+                "workers": [worker("t1", repo="id:repo-sintetico")],
             },
             "wave.json",
         )
@@ -451,7 +451,7 @@ class LaunchWaveTests(unittest.TestCase):
     def test_new_top_level_rejects_whitespace_only_required_fields(self) -> None:
         for field in ("repo", "worktree_name"):
             with self.subTest(field=field):
-                fields = {"repo": "id:06de043a", "worktree_name": "ab-t1"}
+                fields = {"repo": "id:repo-sintetico", "worktree_name": "ab-t1"}
                 fields[field] = " \t "
                 wave = self.write(
                     {
@@ -479,7 +479,7 @@ class LaunchWaveTests(unittest.TestCase):
                     worker(
                         "t1",
                         worktree="new-top-level",
-                        repo="id:06de043a",
+                        repo="id:repo-sintetico",
                         worktree_name="ab-t1",
                     )
                 ],
@@ -492,7 +492,7 @@ class LaunchWaveTests(unittest.TestCase):
         self.assertEqual(code, 0)
         fake.assert_not_called()
         index = commands[0].index("--repo")
-        self.assertEqual(commands[0][index + 1], "id:06de043a")
+        self.assertEqual(commands[0][index + 1], "id:repo-sintetico")
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ else:
     from discover import use_utf8_stdout
 
 
-# El costo solo informa y desempata; estimaciones relativas del A/B justo (docs/evaluation.md).
+# El costo solo informa y desempata; estimaciones relativas de un ensayo anterior (ver el Historial de docs/evaluation.md).
 W_TIER = {"gratis": 0.2, "economico": 1, "economico-capaz": 2, "medio": 4, "frontera": 10}
 WORK = {"trivial": 1, "chica": 2, "mediana": 4, "grande": 10}
 FLOOR = {"trivial": "gratis", "chica": "economico", "mediana": "economico-capaz", "grande": "medio"}

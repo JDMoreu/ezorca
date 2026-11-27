@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1120" height="680" viewBox="0 0 1120 680" role="img" aria-labelledby="ab-title ab-desc">
-  <title id="ab-title">A/B real: calidad y tokens sin EzOrca y con EzOrca</title>
-  <desc id="ab-desc">Calidad del juez ciego: 9 de 15 sin EzOrca con un bloqueante, y 14 de 15 con EzOrca sin bloqueantes. Tokens nuevos, suma de entrada y salida: sin EzOrca, Codex medio 14 697; con EzOrca, OpenCode económico 137 305, Codex medio 21 327 y Claude frontera 12 383. Caché leída: sin EzOrca, Codex medio 324 352; con EzOrca, OpenCode económico 3 590 016, Codex medio 239 616 y Claude frontera 10 600 989. Los dos subgráficos de tokens tienen escalas lineales independientes.</desc>
+  <title id="ab-title">Histórico (24-nov-2026, antes de 1.4.0): A/B cost_report.py, calidad y tokens</title>
+  <desc id="ab-desc">Resultado histórico del 24-nov-2026, anterior a 1.4.0, con un ejecutor OpenCode económico en el brazo con EzOrca. Calidad del juez ciego: 9 de 15 sin EzOrca con un bloqueante, y 14 de 15 con EzOrca sin bloqueantes. Tokens nuevos, suma de entrada y salida: sin EzOrca, Codex medio 14 697; con EzOrca, OpenCode económico 137 305, Codex medio 21 327 y Claude frontera 12 383. Caché leída: sin EzOrca, Codex medio 324 352; con EzOrca, OpenCode económico 3 590 016, Codex medio 239 616 y Claude frontera 10 600 989. Los dos subgráficos de tokens tienen escalas lineales independientes.</desc>
   <style>
     :root {
       --bg: #F4F6F8; --surface: #FFFFFF; --ink: #14213A; --muted: #5B6B82;
@@ -22,8 +22,8 @@
     .num { font-variant-numeric: tabular-nums; }
   </style>
   <rect x="0" y="0" width="1120" height="680" fill="var(--bg)"/>
-  <text class="title" x="32" y="42" fill="var(--ink)">A/B real: calidad y tokens</text>
-  <text class="label" x="32" y="68" fill="var(--muted)">Misma tarea y contrato · 24-nov-2026</text>
+  <text class="title" x="32" y="42" fill="var(--ink)">Histórico (24-nov-2026, antes de 1.4.0): A/B cost_report.py, calidad y tokens</text>
+  <text class="label" x="32" y="68" fill="var(--muted)">Misma tarea y contrato · versión anterior de EzOrca, con ejecutor OpenCode económico</text>
   <rect x="32" y="96" width="310" height="540" fill="var(--surface)" stroke="var(--line)"/>
   <rect x="366" y="96" width="722" height="540" fill="var(--surface)" stroke="var(--line)"/>
   <text class="panel-title" x="56" y="132" fill="var(--ink)">Calidad del juez ciego</text>

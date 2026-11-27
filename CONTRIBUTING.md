@@ -24,7 +24,9 @@ configurada, ejecuta antes `git config --global user.email` y `user.name`.
 
 1. Añade o ajusta los casos fijos que cubran el cambio.
 2. Corre las pruebas y deja el resultado en la descripción del cambio.
-3. Si cambia el comportamiento de la skill, mide el cambio con una evaluación
-   ciega y el comparador; el procedimiento está en `docs/evaluation.md`.
+3. Si cambia el comportamiento de la skill, mídelo con una evaluación ciega y
+   el comparador (procedimiento en `references/skill-evaluation.md`; método y
+   resultados en `docs/evaluation.md`). Si cambia la `description` de
+   `SKILL.md`, vuelve a correr `eval/activation`.
 4. Envía el cambio con qué problema resuelve, qué evidencia lo respalda y qué
    queda pendiente.

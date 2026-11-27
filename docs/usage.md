@@ -18,7 +18,7 @@ No necesitas elegir agentes, modelos ni comandos: eso lo decide el coordinador e
 
 Los papeles no son una lista fija. Elefante/PM, senior, junior y QA son solo ejemplos: cada Run define los que la tarea necesite —por ejemplo, investigador, diseñador, arquitecto, revisor de seguridad, tester, documentador o integrador— y cualquier agente o modelo puede ocupar cualquiera según su capacidad, su costo y su disponibilidad.
 
-En un Run coordinado, los modelos de frontera planifican, escriben encargos y validan. Ejecutores capaces de nivel medio (nunca de frontera) escriben el código. El orden de decisión es calidad, luego eficiencia (tiempo y paralelismo) y luego costo, siempre dentro de los topes de cada plan. Si prefieres otra cosa, indica cómo repartir el trabajo.
+Al delegar o coordinar, los modelos de frontera planifican, escriben encargos y validan. Ejecutores capaces de nivel medio (nunca de frontera) escriben el código. El orden de decisión es calidad, luego eficiencia (tiempo y paralelismo) y luego costo, siempre dentro de los topes de cada plan. Si prefieres otra cosa, indica cómo repartir el trabajo.
 
 ## Cinco encargos de ejemplo
 
@@ -28,7 +28,7 @@ En un Run coordinado, los modelos de frontera planifican, escriben encargos y va
 
 Con cuota para todos los niveles, EzOrca la delega y lo avisa en una línea:
 
-> «Modo delegado (calidad primero): planifica este chat, escribe un ejecutor económico capaz (o medio si no hay cuota) con esfuerzo medio y valida un modelo de frontera en otra sesión; si hay hallazgos, corrige y revalida. Costo estimado 38, con chat de nivel medio, dentro de tus topes.»
+> «Modo delegado (calidad primero): planifica este chat, escribe un ejecutor económico capaz (o medio si no hay cuota) con esfuerzo medio y valida un modelo de frontera en otra sesión (te pide permiso antes de abrirla, salvo que ya hayas autorizado la frontera); si hay hallazgos, corrige y revalida. Costo estimado 38 (unidades relativas, no dólares), con chat de nivel medio, dentro de tus topes.»
 
 El ejecutor hace el cambio y corre las pruebas; el validador lo revisa en otra sesión y el ciclo se repite hasta que no queden hallazgos bloqueantes ni mayores (máximo 3 rondas).
 
@@ -58,17 +58,19 @@ Si es una tarea chica, el chat planifica, una sesión de Codex en esfuerzo medio
 
 ## Qué verás
 
-**El plan de un Run coordinado.** Antes de tocar nada verás una línea por papel. Por ejemplo, con Claude:
+**El plan por papel.** Antes de tocar nada verás una línea por papel. Por ejemplo, con Claude y una tarea mediana:
 
 ```text
-Elefante (PM): Claude, modelo de este chat — fija los criterios, escribe los encargos, integra y acepta; en un Run coordinado no escribe código.
-Planificador: Claude Opus (frontera, esfuerzo alto) — el propio chat si ya es de frontera; si no, una sesión nueva; diseña y describe la solución.
-Ejecutor: Claude Sonnet con esfuerzo alto (medio) — escribe el código y las pruebas; nunca frontera.
-Validador: Claude Opus en otra sesión (frontera, esfuerzo alto) — revisa contra los criterios; si hay hallazgos, corrige y revalida.
+Elefante (PM): Claude, modelo de este chat — fija los criterios, escribe los encargos, integra y acepta; al delegar o coordinar no escribe código.
+Planificador: Claude, <modelo de frontera disponible> (esfuerzo alto) — el propio chat si ya es de frontera; si no, una sesión nueva; diseña y describe la solución.
+Ejecutor: Claude, <modelo de nivel medio disponible> con esfuerzo alto — escribe el código y las pruebas; nunca frontera.
+Validador: el modelo más fuerte disponible, en otra sesión y de otra familia si hay (esfuerzo alto) — revisa contra los criterios; si hay hallazgos, corrige y revalida (máx. 3 rondas).
 Previsto: planifica este chat (frontera); 1 sesión media y 1 de frontera para validar.
 
-Aviso del modo (mediana): «Modo delegado (calidad primero): planifica Opus, escribe Sonnet con esfuerzo alto y valida Opus en otra sesión; si hay hallazgos, corrige y revalida. Costo estimado 113, con chat de frontera, dentro de tus topes.»
+Aviso del modo (mediana): «Modo delegado (calidad primero): planifica este chat, escribe un modelo medio con esfuerzo alto y valida un modelo de frontera en otra sesión; si hay hallazgos, corrige y revalida. Costo estimado 113 (unidades relativas), con chat de frontera, dentro de tus topes.»
 ```
+
+El nivel de cada modelo sale de su precio de salida (`scripts/tiers.json`), no de su nombre.
 
 Si un papel no sale de lo instalado, lo dice en su línea. Los IDs concretos cambian con tu entorno; esa es la razón de que la skill descubra agentes y modelos en cada Run.
 
@@ -92,7 +94,7 @@ Pregunta antes solo si usaría un modelo de frontera o Codex en esfuerzo alto en
 
 ## Consejos
 
-- **Calidad, luego tiempo, luego costo.** El selector elige el modo y los niveles por calidad; el costo se informa y desempata, y los topes de cada plan siempre se respetan. [Evaluación](evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca)
+- **Calidad, luego tiempo, luego costo.** El selector elige el modo y los niveles por calidad; el costo se informa y desempata, y los topes de cada plan siempre se respetan. [Modo inteligente](../SKILL.md#modo-inteligente-la-mejor-calidad-dentro-del-presupuesto)
 - **La frontera planifica y valida.** Los ejecutores escriben el código y las pruebas con encargos detallados; su nivel máximo es medio. Si ya autorizaste la frontera, dilo para que no te pregunte en cada sesión.
 - **Tandas de unos cuatro por modelo.** Más workers simultáneos del mismo modelo chocan con el límite de concurrencia del proveedor. Si hay mucho trabajo, reparte entre modelos parecidos o espera la tanda siguiente.
 - **Las cuotas se agotan.** Cuando pasa, EzOrca cambia de agente o de nivel y lo dice en una línea. Si limitaste los agentes y no queda ninguno, te informa el bloqueo en vez de inventar una salida.

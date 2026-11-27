@@ -3,21 +3,22 @@
 EzOrca tomó ideas de papers y herramientas existentes, sin dependencias nuevas.
 Se leyó documentación en noviembre de 2026; no se ejecutaron ni se reprodujeron
 sus benchmarks, y las cifras son de las fuentes; las entradas sin enlace son
-principios de skills instaladas. Los papeles citados (Elefante, senior, junior,
-QA) son ejemplos adaptativos, no una lista fija: cada Run define los suyos (por
-ejemplo, investigador o tester) y cualquier agente o modelo puede ocupar
-cualquiera según capacidad, costo y disponibilidad; por defecto, los caros
-razonan y casi nunca escriben código, salvo que el usuario diga otra cosa.
+principios de skills instaladas. Los papeles citados son ejemplos; cada Run
+define los suyos. Desde 1.4.0 la meta es calidad validada: los modelos de
+frontera planifican y validan, el ejecutor llega como máximo a nivel medio y el
+costo solo desempata, dentro de los topes de cada plan.
 
 ## Papers
 
 - **FrugalGPT (2023).** https://arxiv.org/abs/2305.05176 — Una cascada de modelos
   puede igualar al mejor con mucho menos costo en sus experimentos. **En EzOrca:**
-  registrar el costo real por tarea y calibrar el escalado con datos, sin prometer
-  ese ahorro.
+  registrar el costo real por tarea (`cost_report.py`) sin prometer ahorro: el
+  costo es tope y desempate, no la meta.
 - **RouteLLM (2024).** https://arxiv.org/abs/2406.18665 — Enruta entre un
-  modelo fuerte y uno débil según preferencias y costo. **En EzOrca:** elegir el
-  modelo inicial por tarea, riesgo y costo; el historial quedó fuera.
+  modelo fuerte y uno débil según preferencias y costo. **En EzOrca:** el
+  selector fija el nivel por tamaño y riesgo, con la calidad primero; el costo
+  solo desempata entre candidatos del mismo nivel. El enrutamiento por historial
+  quedó fuera.
 - **AutoMix (2023; NeurIPS 2024).** https://arxiv.org/abs/2310.12963 — Verifica la
   respuesta del modelo pequeño y decide si escala, contemplando el ruido de la
   autoverificación. **En EzOrca:** escalar por fallo comprobable, falta de
@@ -74,8 +75,8 @@ razonan y casi nunca escriben código, salvo que el usuario diga otra cosa.
   criterio de tamaño por historia.
 - **Aider (architect/editor).** https://aider.chat/docs/usage/modes.html — Un
   modelo razona y otro convierte la decisión en ediciones. **En EzOrca:** la
-  frontera fija interfaces y criterios; el modelo económico escribe el código y
-  las pruebas.
+  frontera fija interfaces y criterios; un ejecutor de nivel medio como máximo
+  escribe el código y las pruebas.
 - **obra/superpowers.** https://github.com/obra/superpowers — Preflight que
   detecta requisitos sin tarea o prueba, línea base limpia y registro durable.
   **En EzOrca:** `run.md`, chequeo de cobertura criterio → tarea → prueba, línea
@@ -107,14 +108,6 @@ razonan y casi nunca escriben código, salvo que el usuario diga otra cosa.
 - **Taskmaster.** https://github.com/eyaltoledano/claude-task-master — Convierte
   un PRD en tareas con dependencias y una cola lista. **En EzOrca:** estados y
   dependencias por tarea en `run.md`; la cola automática no se implementó.
-- **CrewAI.** https://docs.crewai.com/en/learn/hierarchical-process — Un manager
-  asigna, valida y aplica límites. **En EzOrca:** no se adoptó; ya hay un solo
-  Elefante que acepta y límites de concurrencia y corrección.
-- **LangGraph supervisor.**
-  https://reference.langchain.com/python/langgraph-supervisor/supervisor/create_supervisor —
-  Un supervisor enruta especialistas y recibe solo el mensaje final.
-  **En EzOrca:** no se adoptó; Orca ya espera solo las dependencias y devuelve el
-  reporte final.
 - **Agentless.** https://github.com/OpenAutoCoder/Agentless — Localiza, reproduce,
   parchea y valida; la prueba nueva corre primero sobre el código original.
   **En EzOrca:** reproducción en rojo y localización antes del parche, más cero
@@ -155,6 +148,12 @@ razonan y casi nunca escriben código, salvo que el usuario diga otra cosa.
 
 No se adoptó ninguna herramienta completa: Orca ya aporta sesiones y worktrees.
 Quedaron fuera el debate multi-modelo para tareas rutinarias, la búsqueda
-automática de prompts, los equipos de investigadores salvo en bugs ambiguos y
-los presupuestos como corte duro. Las ideas que sí entraron están en la skill
-como reglas cortas o en `scripts/` como comprobaciones ejecutables.
+automática de prompts, los equipos de investigadores salvo en bugs ambiguos, un
+manager jerárquico (CrewAI, https://docs.crewai.com/en/learn/hierarchical-process)
+y un supervisor intermedio (LangGraph,
+https://reference.langchain.com/python/langgraph-supervisor/supervisor/create_supervisor):
+EzOrca tiene un solo Elefante que acepta y Orca devuelve solo el reporte final.
+Los topes de cuota sí son un corte duro: `resources.py` bloquea el plan que
+supera el tope de su ventana (5 h, semanal o mensual). Las ideas que sí entraron
+están en la skill como reglas cortas o en `scripts/` como comprobaciones
+ejecutables.

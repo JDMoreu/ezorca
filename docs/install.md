@@ -9,8 +9,9 @@ La raíz de este repositorio **es** la carpeta de la skill: quien lo clona en su
 | Orca con su CLI | `orca --version` | Una versión, por ejemplo `1.4.273` |
 | Al menos un agente instalado en Orca | `orca agent installed --json` | JSON con `ok: true` y al menos un agente en `agents` (`claude`, `codex`, `opencode`, …) |
 | Python 3.11 o superior | `python --version` | `Python 3.11` o mayor |
+| Acceso a internet la primera vez y cada 7 días | `python ~/.agents/skills/ezorca/scripts/resources.py` | `resources.py` descarga los precios de `https://models.dev/api.json` y los guarda en `~/.cache/ezorca`; si la descarga falla y hay una caché anterior, la usa y avisa en `warnings` |
 
-No hay dependencias que instalar: los scripts usan solo la biblioteca estándar.
+No hay dependencias que instalar: los scripts usan solo la biblioteca estándar. Para conocer los topes de cada plan, `orca account list --json` debe responder; si no, los planes de Claude, Codex y OpenCode Go quedan con cuota desconocida y bloqueados.
 
 ## Instalar
 
@@ -37,7 +38,9 @@ python ~/.agents/skills/ezorca/scripts/discover.py
 
 Debe imprimir un JSON con `agents` y `models`, y terminar con exit 0. Si falla con exit 2, no pudo hablar con Orca o con `opencode models`: revisa que `orca` esté en el PATH y que haya al menos un agente instalado. En PowerShell: `python "$env:USERPROFILE\.agents\skills\ezorca\scripts\discover.py"`.
 
-Prueba rápida de que la skill se carga: pide en un chat de Orca «Usa EzOrca para <una tarea pequeña>» y comprueba que responde con un plan por papel (los que la tarea necesite; son adaptativos) antes de tocar código.
+Comprueba también los recursos: `python ~/.agents/skills/ezorca/scripts/resources.py` debe imprimir `available` y `pick` con exit 0 (1: ningún modelo elegible; 2: argumentos inválidos o sin catálogo de precios). Si Orca no responde, sigue imprimiendo, pero con un aviso en `warnings` y los planes bloqueados por cuota desconocida.
+
+Prueba rápida de que la skill se carga: pide en un chat de Orca «Usa EzOrca para <una tarea pequeña>»; antes de tocar código, debe anunciar en una línea el modo, el motivo y el costo estimado.
 
 ## Actualizar
 
@@ -54,9 +57,9 @@ Si usaste una copia en lugar de un enlace, repite el `git pull` en cada copia. R
 rm -rf ~/.agents/skills/ezorca
 ```
 
-Si creaste un enlace en `~/.claude/skills/ezorca`, bórralo también; si clonaste dos veces, borra las dos copias. No queda nada más en el sistema: los scripts no escriben fuera de las rutas que les pasas.
+Si creaste un enlace en `~/.claude/skills/ezorca`, bórralo también; si clonaste dos veces, borra las dos copias. Borra además la caché de precios de `resources.py`: `rm -rf ~/.cache/ezorca`. Los demás scripts solo escriben en las rutas que les pasas.
 
-En Windows: `rmdir /s /q "%USERPROFILE%\.agents\skills\ezorca"`.
+En Windows: `rmdir /s /q "%USERPROFILE%\.agents\skills\ezorca"` y `rmdir /s /q "%USERPROFILE%\.cache\ezorca"`.
 
 ## Ajustar la clasificación de modelos
 

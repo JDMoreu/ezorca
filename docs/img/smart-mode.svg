@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1120" height="720" viewBox="0 0 1120 720" role="img" aria-labelledby="smart-title smart-desc">
-  <title id="smart-title">Modo inteligente: calidad y tokens</title>
-  <desc id="smart-desc">Calidad del juez ciego (/25), en orden: Opus directo 1: 19; Opus directo 2: 17; Opus + EzOrca 1.2, 1: 18; Opus + EzOrca 1.2, 2: 20; Sonnet directo 1: 19; Sonnet directo 2: 22; DeepSeek delegado 1: 17; DeepSeek delegado 2: 19. Escala lineal 0–25; las cuatro barras de Sonnet y DeepSeek corresponden al modo inteligente. La evaluación nueva difirió hasta 4 puntos de la anterior. Tokens de salida, promedios por brazo en miles: Opus directo, frontera (Opus) 19,2; Opus + EzOrca 1.2, frontera 30,8 y económico (DeepSeek) 23,5; Sonnet directo, económico capaz 30,8 (Sonnet 24,5 + Kimi 6,3) y económico 0,6; DeepSeek delegado, económico 10,5 y económico capaz (Kimi) 14,9. Económico capaz agrupa Sonnet y Kimi; económico, DeepSeek. Los cuatro brazos de tokens usan la misma escala lineal de 0 a 60 mil. 0 tokens de Opus en el modo inteligente. Tarea mediana, 2 repeticiones por brazo, 25-nov-2026. Tokens, no dólares.</desc>
+  <title id="smart-title">Histórico (25-nov-2026, selector 1.3 y niveles por nombre): modo inteligente</title>
+  <desc id="smart-desc">Resultado histórico del 25-nov-2026, con el selector 1.3 y niveles asignados por nombre de modelo, anterior a 1.4.0 (hoy los niveles salen del precio de salida). Calidad del juez ciego (/25), en orden: Opus directo 1: 19; Opus directo 2: 17; Opus + EzOrca 1.2, 1: 18; Opus + EzOrca 1.2, 2: 20; Sonnet directo 1: 19; Sonnet directo 2: 22; DeepSeek delegado 1: 17; DeepSeek delegado 2: 19. Escala lineal 0–25; las cuatro barras de Sonnet y DeepSeek corresponden al modo inteligente. La evaluación nueva difirió hasta 4 puntos de la anterior. Tokens de salida, promedios por brazo en miles: Opus directo, frontera (Opus) 19,2; Opus + EzOrca 1.2, frontera 30,8 y económico (DeepSeek) 23,5; Sonnet directo, económico capaz 30,8 (Sonnet 24,5 + Kimi 6,3) y económico 0,6; DeepSeek delegado, económico 10,5 y económico capaz (Kimi) 14,9. Económico capaz agrupa Sonnet y Kimi; económico, DeepSeek. Los cuatro brazos de tokens usan la misma escala lineal de 0 a 60 mil. 0 tokens de Opus en el modo inteligente. Tarea mediana, 2 repeticiones por brazo, 25-nov-2026. Tokens, no dólares.</desc>
   <style>
     :root {
       --bg: #F4F6F8; --surface: #FFFFFF; --ink: #14213A; --muted: #5B6B82;
@@ -22,7 +22,8 @@
     .num { font-variant-numeric: tabular-nums; }
   </style>
   <rect x="0" y="0" width="1120" height="720" fill="var(--bg)"/>
-  <text class="title" x="32" y="42" fill="var(--ink)">Modo inteligente: calidad y tokens</text>
+  <text class="title" x="32" y="42" fill="var(--ink)">Histórico (25-nov-2026, selector 1.3 y niveles por nombre): modo inteligente</text>
+  <text class="label" x="32" y="68" fill="var(--muted)">Anterior a 1.4.0: los niveles se agrupaban por nombre de modelo; hoy salen del precio de salida.</text>
 
   <rect x="32" y="96" width="500" height="560" fill="var(--surface)" stroke="var(--line)"/>
   <rect x="552" y="96" width="536" height="560" fill="var(--surface)" stroke="var(--line)"/>

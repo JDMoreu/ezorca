@@ -2,9 +2,9 @@
 
 Escribe cada spec en un archivo y pásala con `--spec-file`. El preámbulo de Orca y la regla de Goldfish de EzOrca ya prohíben delegar: ninguna spec lleva la línea «No delegues ni lances workers». Si el Run necesita decir algo sobre delegar, se dice una sola vez como política del Run, en el plan, no en cada spec.
 
-## Implementación (junior con modelo económico)
+## Implementación (ejecutor)
 
-Un modelo económico no rellena huecos. Dale todo lo que necesita, incluido al menos un ejemplo concreto de entrada y salida esperada (o de comando y resultado); sin ese ejemplo la spec no está lista. En un Run coordinado, el Elefante y el senior no escriben código ni pruebas, salvo que el usuario indique otra cosa. Describen los casos de aceptación (entrada y resultado esperado) y el junior los convierte en pruebas antes de implementar el cambio. Si la tarea llegó al último escalón, la sección «Solución descrita» lleva la solución de la frontera en prosa.
+Un ejecutor sin contexto no rellena huecos, y cuanto más económico el modelo, más detalle hay que darle. Dale todo lo que necesita, incluido al menos un ejemplo concreto de entrada y salida esperada (o de comando y resultado); sin ese ejemplo la spec no está lista. En un Run coordinado, el Elefante y el senior no escriben código ni pruebas, salvo que el usuario indique otra cosa. Describen los casos de aceptación (entrada y resultado esperado) y el junior los convierte en pruebas antes de implementar el cambio. Si la tarea llegó al último escalón, la sección «Solución descrita» lleva la solución de la frontera en prosa.
 
 ```text
 Goldfish N – <tema corto>

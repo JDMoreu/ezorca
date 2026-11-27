@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1120" height="500" viewBox="0 0 1120 500" role="img" aria-labelledby="ladder-title ladder-desc">
   <title id="ladder-title">Escalera de modelos de EzOrca</title>
-  <desc id="ladder-desc">Cuatro escalones: económico o gratis, económico capaz, medio con Codex medio, y frontera que describe la solución sin escribir el código. Se sube tras dos fallos o antes por fallo crítico o riesgo. EzOrca avisa y sigue; pregunta solo antes de Opus o Codex alto, o si se pasa del presupuesto.</desc>
+  <desc id="ladder-desc">Cuatro escalones: económico o gratis, económico capaz, medio (p. ej., Codex medio, precio de salida ≤ US$12/M), y frontera que describe la solución sin escribir el código. Se sube tras dos fallos o antes por fallo crítico o riesgo. Empieza en el escalón que fija el selector; el nivel sale del precio, no del nombre. EzOrca avisa y sigue; pregunta solo antes de Opus o Codex alto, o si se pasa del presupuesto.</desc>
   <style>
     :root {
       --bg: #F4F6F8; --surface: #FFFFFF; --ink: #14213A; --muted: #5B6B82;
@@ -36,7 +36,8 @@
   <rect x="574" y="150" width="235" height="210" fill="var(--surface)" stroke="var(--muted)" stroke-width="2"/>
   <rect x="574" y="150" width="235" height="6" fill="var(--muted)"/>
   <text class="box-title" x="594" y="188" fill="var(--muted)">Medio</text>
-  <text class="label" x="594" y="218" fill="var(--ink)">Codex medio</text>
+  <text class="label" x="594" y="218" fill="var(--ink)">p. ej., Codex medio</text>
+  <text class="small" x="594" y="240" fill="var(--muted)">precio de salida ≤ US$12/M</text>
   <path d="M812 182 L826 182 L826 162 L838 162 L826 150 L814 162 L826 162" fill="none" stroke="var(--muted)" stroke-width="2"/>
   <rect x="839" y="100" width="235" height="260" fill="var(--surface)" stroke="var(--accent-2)" stroke-width="2"/>
   <rect x="839" y="100" width="235" height="6" fill="var(--accent-2)"/>
@@ -46,6 +47,7 @@
   <text class="small" x="859" y="230" fill="var(--muted)">Opus / Codex alto:</text>
   <text class="small" x="859" y="250" fill="var(--muted)">pregunta antes.</text>
   <rect x="44" y="394" width="1030" height="76" fill="var(--surface)" stroke="var(--line)"/>
-  <text class="label" x="64" y="422" fill="var(--ink)">Sube tras 2 fallos, o antes por fallo crítico o riesgo. Avisa y sigue.</text>
-  <text class="label" x="64" y="448" fill="var(--ink)">Pregunta solo antes de Opus/Codex alto o si se pasa del presupuesto.</text>
+  <text class="label" x="64" y="414" fill="var(--ink)">Sube tras 2 fallos, o antes por fallo crítico o riesgo. Avisa y sigue.</text>
+  <text class="label" x="64" y="436" fill="var(--ink)">Pregunta solo antes de Opus/Codex alto o si se pasa del presupuesto.</text>
+  <text class="label" x="64" y="458" fill="var(--ink)">Empieza en el escalón que fija el selector; el nivel sale del precio, no del nombre.</text>
 </svg>

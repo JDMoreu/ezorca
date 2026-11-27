@@ -23,9 +23,8 @@ ejemplos, no una lista fija. Cada Run define los que la tarea necesite —por
 ejemplo, investigador, diseñador, arquitecto, revisor de seguridad, tester,
 documentador o integrador—, y cualquier agente o modelo puede ocupar cualquiera
 de ellos según su capacidad, su disponibilidad y su costo, en ese orden. La
-política por defecto se mantiene en un Run coordinado: los modelos de frontera
-planifican y validan, y casi nunca escriben código, salvo que el usuario diga
-otra cosa.
+política por defecto, al delegar o coordinar: los modelos de frontera
+planifican y validan y no escriben código, salvo que el usuario diga otra cosa.
 
 Papeles habituales, como ejemplo:
 
@@ -34,7 +33,7 @@ Papeles habituales, como ejemplo:
 | Elefante (PM) | El modelo de este chat | Estrategia, plan, registro, encargos, decisiones, integración y aceptación | Escribir código ni pruebas, ni siquiera ediciones triviales |
 | Senior | Modelo de frontera o de esfuerzo alto | Diseño difícil, casos de aceptación de riesgo, validación, describir la solución | Escribir código; trabajo repetitivo o ya bien definido |
 | Ejecutor | Modelo de nivel medio o inferior | Todo el código y las pruebas, con un encargo detallado | Decisiones de diseño abiertas |
-| QA | Otra familia de agente, o sesión nueva y ciega | Revisar el resultado contra los criterios, sin ver el razonamiento del implementador | Corregir lo que revisa |
+| QA | El modelo más fuerte disponible, de otra familia de agente o en una sesión nueva y ciega | Revisar el resultado contra los criterios, sin ver el razonamiento del implementador | Corregir lo que revisa |
 
 Antes de planear, el Elefante estima tamaño, partes independientes y riesgo.
 `choose_mode.py` elige por calidad, luego eficiencia y luego costo: delegar es lo
@@ -65,12 +64,9 @@ con entrada y resultado esperado, los pasos y el archivo y el símbolo que hay q
 cambiar. Resolver un conflicto al integrar también requiere un encargo para
 un ejecutor.
 
-Con el mismo modelo fuerte en el chat, coordinar las tareas chica y mediana
-usó 2,8 y 1,6 veces los tokens de salida del modelo caro y tardó 1,8 y 2,8
-veces más, respectivamente, sin una mejora concluyente de calidad. Esas cifras
-se reportan con honestidad; el selector las usa solo para informar el costo, no
-para decidir el modo.
-[A/B justo](evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca)
+Las mediciones de costo y tiempo de ensayos anteriores, que compararon procesos
+distintos, están en el [Historial de la evaluación](evaluation.md#historial); el
+selector solo usa sus pesos relativos para informar el costo y desempatar.
 
 ## Escalera de modelos
 
@@ -86,7 +82,7 @@ existan se saltan.
   registro del Run con su motivo.
 - **Avisa y sigue.** Al escalar o reasignar, avisa en una línea qué cambia, por
   qué y cuánto sube el costo, y continúa. Se pregunta antes solo si se abriría
-  una sesión de frontera no autorizada (Opus, Codex en esfuerzo alto) o si se superaría
+  una sesión de frontera no autorizada (incluido Codex en esfuerzo alto) o si se superaría
   el presupuesto acordado. Si el último escalón falla, se pausa esa tarea y se
   informa con evidencia.
 - **Caída o falta de cuota.** Si un worker se cae o se queda sin cuota, se
@@ -100,8 +96,11 @@ existan se saltan.
 
 ## Flujo de un Run
 
-1. **Descubrir.** Una vez por Run: agentes instalados, modelos disponibles y qué
-   admite `worker-start`. El resultado se clasifica por escalón.
+1. **Recursos y descubrimiento.** Antes de elegir el modo (en todos los modos),
+   `resources.py` lee los topes de cada plan (5 h, semanal y mensual) y los precios,
+   ubica cada modelo en un nivel por su precio de salida (`scripts/tiers.json`) y su
+   `available` alimenta a `choose_mode.py`. En el Run, `discover.py` guarda el
+   inventario de agentes y modelos para diagnóstico. Se repite si cambia el alcance.
 2. **Plan por papel.** Una línea por papel: papel, agente y modelo de `pick`, nivel
    de costo y motivo. Elige un candidato de `pick` en el nivel que pide `roles`;
    cierra con las sesiones previstas por nivel.
@@ -111,10 +110,13 @@ existan se saltan.
    guardados junto al registro.
 5. **Despertar.** El Elefante termina el turno; Orca lo despierta con los
    reportes. No sondea. Al recibirlos resume la evidencia y actualiza el registro.
-6. **Integrar con puerta.** Un cambio a la vez: solo archivos permitidos y las
+6. **Validar y corregir.** Un validador del nivel más alto disponible revisa en
+   otra sesión; el ejecutor corrige y se revalida hasta que no queden hallazgos
+   bloqueantes ni mayores (máx. 3 rondas); después, pausa e informa.
+7. **Integrar con puerta.** Un cambio a la vez: solo archivos permitidos y las
    pruebas del conjunto. Si algo falla, ese cambio se retira y vuelve con su
    evidencia.
-7. **Cierre con costo.** Resumen por criterio con evidencia, pendientes y costo
+8. **Cierre con costo.** Resumen por criterio con evidencia, pendientes y costo
    real (sesiones por nivel, reintentos, escalados, aceptadas y rechazadas).
 
 ![Flujo de EzOrca](img/flow.svg)
@@ -139,7 +141,9 @@ primera línea; sin esa línea es inválido. La huella cubre el contenido, no la
 lista de nombres: HEAD más el diff, los archivos nuevos y los externos que citen
 los criterios. Se recalcula antes de cada pase. Si la versión cambia, se incumple
 un criterio o aparece un hallazgo bloqueante o mayor, el conteo vuelve a cero.
-Por defecto se pausa tras cinco rondas de corrección o dos horas.
+Por defecto se pausa tras cinco rondas de corrección o dos horas, ajustables por el
+usuario. Es un tope propio de la entrega verificada; el de la entrega normal es de
+3 rondas.
 
 ## Registro del Run
 
@@ -155,8 +159,8 @@ registro, luego la memoria.
 
 Este documento y la skill explican el criterio: cuándo subir un escalón, qué
 papel armar, cómo redactar un encargo, qué aceptar. Los scripts hacen lo
-mecánico: elegir el modo y los niveles por calidad (informando el costo),
-comprobar que un encargo está completo, repartir el cupo de una tanda,
+mecánico: leer topes y precios, elegir el modo y los niveles por calidad
+(informando el costo), comprobar que un encargo está completo, repartir el cupo de una tanda,
 medir una huella, detectar un worker colgado, verificar el alcance de un cambio.
 
 La razón es simple: **las reglas en prosa se omiten**. Un modelo económico que

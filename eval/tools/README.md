@@ -22,4 +22,4 @@ Pide al modelo cargar esta versión de la skill, sin darle soluciones, y produci
 python eval/tools/verify.py resources respuesta.json
 ```
 
-Exit 0 significa que pasa; 1, respuesta válida pero conducta incorrecta; 2, uso o datos mal formados. No se pasan argumentos de la respuesta a una shell. Para una matriz modelo × escenario, conserva una fila por modelo, escenario, repetición, código y evidencia; `RESULTADOS.md` se escribirá después con datos vivos.
+Exit 0 significa que pasa; 1, respuesta válida pero conducta incorrecta; 2, uso o datos mal formados. No se pasan argumentos de la respuesta a una shell. Para una matriz modelo × escenario, conserva una fila por modelo, escenario, repetición, código y evidencia. Los resultados medidos están en [RESULTADOS.md](RESULTADOS.md).

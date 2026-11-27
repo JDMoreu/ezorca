@@ -39,7 +39,7 @@ En un Run coordinado, la frontera puede describir la interfaz, los casos con ent
 
 ## Proporción
 
-Esta tabla orienta el reparto cuando el encargo ya se clasificó como coordinado.
+Esta tabla orienta el reparto según el tamaño y el riesgo del encargo; el modo lo fija `choose_mode.py`.
 
 | Encargo | Equipo |
 |---|---|
@@ -56,7 +56,7 @@ Lanza un Goldfish por perspectiva que necesite contexto limpio, otro agente o su
 1. Una vez por Run, consulta `orca agent installed --json` para conocer los agentes y sus IDs.
 2. Si OpenCode está instalado, consulta `opencode models` (lista en vivo, formato `proveedor/modelo`). Para los agentes sin comando de listado, usa su modelo configurado.
 3. Corre `resources.py` antes del selector. Solo su precio de salida conocido ubica una opción en la [escalera](#escalera-de-modelos); el nombre nunca sustituye el precio. `discover.py` es inventario y deja sin nivel los modelos no tasados.
-4. Si quieres, guarda la clasificación en una caché local regenerable, por ejemplo `<temp>/ezorca/models.json`, con la fecha y la fuente de cada entrada. Regénerala si tiene más de un día, si un arranque falla por un modelo no disponible o si cambian los agentes instalados. El usuario nunca mantiene esta lista.
+4. `resources.py` guarda su propia caché de precios en `~/.cache/ezorca` (7 días por omisión, `--max-age-days`); no mantengas otra clasificación. El usuario nunca mantiene esta lista.
 5. Consulta `orca orchestration worker-start --help` una vez por Run. Ahí se indica qué agentes aceptan `--model` y `--effort`. Para OpenCode, el modelo exige un worktree existente y no admite esfuerzo; con una sola tarea de edición, ese worktree es el workspace actual, no uno hijo nuevo; con varias tareas independientes, cada una usa su propio worktree.
 
 ## Modo inteligente: cómo llenar el selector
@@ -110,7 +110,7 @@ Ejemplos de combinaciones (los modelos concretos salen del descubrimiento):
 
 ## Modelo y esfuerzo
 
-Usa el modelo configurado del agente cuando ya encaja en el nivel elegido. Fija `--model` y `--effort` solo si el usuario los nombró, si ningún modelo configurado encaja o al subir un escalón. Justifícalo en el plan o en el aviso («junior: OpenCode con `<proveedor/modelo>` porque el configurado es caro»). Las preferencias explícitas del usuario mandan.
+Usa el modelo configurado del agente cuando ya encaja en el nivel elegido. Fija `--model` y `--effort` solo si el usuario los nombró, si ningún modelo configurado encaja o al subir un escalón. Justifícalo en el plan o en el aviso («ejecutor: OpenCode con `<proveedor/modelo>` (medio), porque el configurado es de frontera y el ejecutor tiene techo medio»). Las preferencias explícitas del usuario mandan.
 
 ## Escalera de modelos
 

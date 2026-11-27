@@ -7,7 +7,7 @@
 Entrega el presupuesto de cuota y el catálogo de precios antes de delegar: lee los límites de Orca, los modelos de OpenCode, Codex y Claude, y los precios públicos de `models.dev`, y devuelve los candidatos ordenados por precio de salida.
 
 ```bash
-python scripts/resources.py --reserve 80 --reserve-window 5h=95 --reserve-window week=90
+python scripts/resources.py --reserve 80 --reserve-window 5h=95 --reserve-window week=90 --reserve-window month=80
 ```
 
 | Flag | Efecto |
@@ -33,7 +33,7 @@ python <skill>/scripts/discover.py --cache <carpeta del Run>/roster.json
 ```
 
 ```json
-{"generated_at": "...", "agents": ["claude", "codex", "opencode"], "models": [{"agent": "opencode", "model": "opencode-go/modelo", "tier": null}, {"agent": "codex", "model": "configurado", "tier": "medio"}]}
+{"generated_at": "...", "agents": ["claude", "codex", "opencode"], "models": [{"agent": "opencode", "model": "opencode-go/modelo", "tier": null}, {"agent": "codex", "model": "configurado", "tier": null}]}
 ```
 
 `warnings` aparece si un comando falló sin impedir el informe. Opciones: `--cache RUTA` (si está fresca y contiene JSON válido, no ejecuta comandos), `--max-age-hours HORAS` (12). En Windows, una ruta estilo Git Bash como `/c/Users/x/roster.json` se interpreta como `C:/Users/x/roster.json`, al leer y al escribir la caché. Si la caché contiene JSON inválido, se regenera, y si hay un error de lectura, sale con exit 2 y el mensaje `error: no se pudo leer la caché en <ruta>: <detalle>` en stderr. Si la caché no se puede escribir, sale con exit 2 y el mensaje `error: no se pudo escribir la caché en <ruta>: <detalle>` en stderr. El informe se emite con exit 0. Si no se pudo leer el entorno, sale con exit 2.
@@ -82,7 +82,7 @@ Ejemplo con `--chat-tier frontera --size mediana --available economico,medio,fro
 
 ### Pesos y tamaños (solo para informar y desempatar)
 
-Los costos son estimaciones relativas calibradas con el [A/B justo](evaluation.md#ab-justo-sesiones-nuevas-con-y-sin-ezorca).
+Los costos son estimaciones relativas (no dólares) calibradas con un ensayo anterior que comparó procesos distintos; ver el [Historial](evaluation.md#historial). Solo informan y desempatan.
 
 | Nivel | Peso |
 |---|---:|
@@ -105,7 +105,7 @@ Los costos son estimaciones relativas calibradas con el [A/B justo](evaluation.m
 
 ## check_spec.py
 
-Comprueba que los encargos traen lo mínimo para un modelo económico. Entrada: archivos Markdown. Paso del Run: **antes de lanzar la tanda**, sobre todos los encargos.
+Comprueba que los encargos traen lo mínimo para un ejecutor sin contexto previo. Entrada: archivos Markdown. Paso del Run: **antes de lanzar la tanda**, sobre todos los encargos.
 
 ```bash
 python <skill>/scripts/check_spec.py specs/g1.md specs/g2.md --kind implementacion
